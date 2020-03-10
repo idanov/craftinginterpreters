@@ -4,6 +4,8 @@ use std::fs;
 use std::io;
 use std::io::Write;
 
+mod scanner;
+
 fn main() {
     println!("Hello, world!");
     let args: Vec<String> = env::args().collect();
@@ -20,7 +22,10 @@ fn main() {
 fn run_file(filename: &String) {
     let contents = fs::read_to_string(filename)
         .expect("Something went wrong reading the file");
-    println!("{}", contents);
+    run(contents);
+    // if had_error {
+    //     exit(65);
+    // }
 }
 
 fn run_prompt() {
@@ -29,7 +34,24 @@ fn run_prompt() {
         io::stdout().flush().unwrap();
         let mut contents = String::new();
         io::stdin().read_line(&mut contents)
-            .expect("Something went wrong reading the line.");
-        println!("{}", contents);
+            .expect("Something went wrong reading the line");
+        run(contents);
     }
 }
+
+fn run(source: String) {
+    // scan tokens and print them
+    let mut scan = scanner::Scanner::new(source);
+    let tokens = scan.scan_tokens();
+    for token in tokens {
+        println!("{:?}", token);
+    }
+}
+
+// fn error(line: int, message: String) {
+//     report(line, "", message);
+// }
+//
+// fn report(line: int, where_at: &str, message: String) {
+//     println!("[line " + line + "] Error" + where_at + ": " + message);
+// }
