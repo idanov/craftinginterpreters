@@ -101,15 +101,12 @@ impl<'a> Scanner<'a> {
             Some('>') if self.munch('=') => self.add_token(TokenType::GreaterEqual, ">=".to_string()),
             Some('>') => self.add_token(TokenType::Greater, c.unwrap().to_string()),
 
-            Some('/') =>
-                if self.munch('/') {
-                    self.chars.by_ref().take_while(|x| *x != '\n');
+            Some('/') if self.munch('/') => {
+                    let _: String = self.chars.by_ref().take_while(|x| *x != '\n').collect();
                     self.line += 1;
                     self.current = 0;
-                } else {
-                    self.add_token(TokenType::Slash, c.unwrap().to_string());
                 },
-
+            Some('/') => self.add_token(TokenType::Slash, c.unwrap().to_string()),
             Some(' ') | Some('\t') | Some('\r') => (),
             Some('\n') => {
                 self.line += 1;
