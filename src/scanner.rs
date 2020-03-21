@@ -1,7 +1,8 @@
 use std::str::Chars;
-use std::iter::Peekable;
+use itertools::{multipeek, MultiPeek};
+use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Copy, Clone)]
 pub enum TokenType {
     // Single-character tokens.
     LeftParen,
@@ -38,20 +39,40 @@ pub struct Token {
 }
 
 pub struct Scanner<'a> {
-    chars: Peekable<Chars<'a>>,
+    chars: MultiPeek<Chars<'a>>,
     tokens: Vec<Token>,
     current: usize,
     line: usize,
+    keywords: HashMap<&'a str, TokenType>,
 }
 
 impl<'a> Scanner<'a> {
-    pub fn new(source: &'a String) -> Scanner<'a> {
-        let chars = source.chars().peekable();
+    pub fn new(source: &String) -> Scanner {
+        let keywords: HashMap<&str, TokenType> = [
+            ("and", TokenType::And),
+            ("class", TokenType::Class),
+            ("else", TokenType::Else),
+            ("false", TokenType::False),
+            ("for", TokenType::For),
+            ("fun", TokenType::Fun),
+            ("if", TokenType::If),
+            ("nil", TokenType::Nil),
+            ("or", TokenType::Or),
+            ("print", TokenType::Print),
+            ("return", TokenType::Return),
+            ("super", TokenType::Super),
+            ("this", TokenType::This),
+            ("true", TokenType::True),
+            ("var", TokenType::Var),
+            ("while", TokenType::While),
+        ].iter().cloned().collect();
+
         Scanner {
-            chars,
+            chars: multipeek(source.chars()),
             tokens: Vec::new(),
             current: 0,
             line: 1,
+            keywords
         }
     }
 
@@ -92,13 +113,13 @@ impl<'a> Scanner<'a> {
             Some(x @ ';') => self.add_token(TokenType::Semicolon, x.to_string()),
             Some(x @ '*') => self.add_token(TokenType::Star, x.to_string()),
 
-            Some(x @ '!') if self.munch('=') => self.add_token(TokenType::BangEqual, "!=".to_string()),
+            Some('!') if self.munch('=') => self.add_token(TokenType::BangEqual, "!=".to_string()),
             Some(x @ '!') => self.add_token(TokenType::Bang, x.to_string()),
-            Some(x @ '=') if self.munch('=') => self.add_token(TokenType::EqualEqual, "==".to_string()),
+            Some('=') if self.munch('=') => self.add_token(TokenType::EqualEqual, "==".to_string()),
             Some(x @ '=') => self.add_token(TokenType::Equal, x.to_string()),
-            Some(x @ '<') if self.munch('=') => self.add_token(TokenType::LessEqual, "<=".to_string()),
+            Some('<') if self.munch('=') => self.add_token(TokenType::LessEqual, "<=".to_string()),
             Some(x @ '<') => self.add_token(TokenType::Less, x.to_string()),
-            Some(x @ '>') if self.munch('=') => self.add_token(TokenType::GreaterEqual, ">=".to_string()),
+            Some('>') if self.munch('=') => self.add_token(TokenType::GreaterEqual, ">=".to_string()),
             Some(x @ '>') => self.add_token(TokenType::Greater, x.to_string()),
 
             Some('/') if self.munch('/') => {
@@ -127,17 +148,29 @@ impl<'a> Scanner<'a> {
             },
 
             Some(x) if x.is_digit(10) => {
-                // TODO: parse numbers
+                let mut digits:String = String::from(x.to_string());
+                while self.chars.peek().filter(|y| y.is_digit(10)).is_some() {
+                    digits.extend(self.chars.next());
+                };
+                // TODO: fix this one here
+                if self.chars.peek().filter(|y| **y == '.').is_some() && self.chars.peek().filter(|y| y.is_digit(10)).is_some() {
+                    digits.extend(self.chars.next());
+                    while self.chars.peek().filter(|y| y.is_digit(10)).is_some() {
+                        digits.extend(self.chars.next());
+                    };
+                }
+                self.add_token(TokenType::Number, digits);
             },
             Some(x) if x.is_alphabetic() => {
                 let mut ident:String = String::from(x.to_string());
-                ident.push(x);
                 while self.chars.peek().filter(|y| y.is_alphanumeric()).is_some() {
-                    ident.push(self.chars.next().unwrap());
+                    ident.extend(self.chars.next());
                 };
 
-                // TODO: Check for keywords or just make it an identifier
-                self.add_token(TokenType::Identifier, ident);
+                match self.keywords.get(ident.as_str()) {
+                    Some(y) => self.add_token(*y, String::from("")),
+                    None => self.add_token(TokenType::Identifier, ident),
+                }
             },
 
             _ => {
