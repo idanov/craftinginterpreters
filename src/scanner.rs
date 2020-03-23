@@ -1,6 +1,7 @@
 use std::str::Chars;
-use itertools::{multipeek, MultiPeek};
+use itertools::Itertools;
 use std::collections::HashMap;
+use std::iter::Peekable;
 
 #[derive(Debug, Copy, Clone)]
 pub enum TokenType {
@@ -39,7 +40,7 @@ pub struct Token {
 }
 
 pub struct Scanner<'a> {
-    chars: MultiPeek<Chars<'a>>,
+    chars: Peekable<Chars<'a>>,
     tokens: Vec<Token>,
     current: usize,
     line: usize,
@@ -68,7 +69,7 @@ impl<'a> Scanner<'a> {
         ].iter().cloned().collect();
 
         Scanner {
-            chars: multipeek(source.chars()),
+            chars: source.chars().peekable(),
             tokens: Vec::new(),
             current: 0,
             line: 1,
@@ -96,6 +97,7 @@ impl<'a> Scanner<'a> {
             self.scan_token();
         }
 
+        self.add_token(TokenType::EOF, String::from(""));
         return &self.tokens;
     }
 
@@ -147,34 +149,28 @@ impl<'a> Scanner<'a> {
                 // TODO: if self.chars.peek() is None (file ended), raise error for unterminated string
             },
 
-            Some(x) if x.is_digit(10) => {
+            Some(x) if x.is_numeric() => {
                 let mut digits:String = String::from(x.to_string());
-                while self.chars.peek().filter(|y| y.is_digit(10)).is_some() {
+                digits.extend(self.chars.take_while_ref(|y| y.is_numeric()));
+                let mut lookahead = self.chars.clone();
+                if lookahead.next().filter(|y| *y == '.').is_some() && lookahead.next().filter(|y| y.is_numeric()).is_some() {
                     digits.extend(self.chars.next());
-                };
-                // TODO: fix this one here
-                if self.chars.peek().filter(|y| **y == '.').is_some() && self.chars.peek().filter(|y| y.is_digit(10)).is_some() {
-                    digits.extend(self.chars.next());
-                    while self.chars.peek().filter(|y| y.is_digit(10)).is_some() {
-                        digits.extend(self.chars.next());
-                    };
+                    digits.extend(self.chars.take_while_ref(|y| y.is_numeric()));
                 }
                 self.add_token(TokenType::Number, digits);
             },
             Some(x) if x.is_alphabetic() => {
                 let mut ident:String = String::from(x.to_string());
-                while self.chars.peek().filter(|y| y.is_alphanumeric()).is_some() {
-                    ident.extend(self.chars.next());
-                };
-
-                match self.keywords.get(ident.as_str()) {
-                    Some(y) => self.add_token(*y, String::from("")),
+                ident.extend(self.chars.take_while_ref(|y| y.is_alphanumeric()));
+                let token = self.keywords.get(ident.as_str()).map(|y| y.clone());
+                match token {
+                    Some(y) => self.add_token(y, String::from("")),
                     None => self.add_token(TokenType::Identifier, ident),
                 }
             },
 
             _ => {
-                // raise error for unexpected character
+                // TODO: raise error for unexpected character
                 ()
             },
         }
