@@ -47,11 +47,3 @@ fn run(source: String) {
         println!("{:?}", token);
     }
 }
-
-// fn error(line: int, message: String) {
-//     report(line, "", message);
-// }
-//
-// fn report(line: int, where_at: &str, message: String) {
-//     println!("[line " + line + "] Error" + where_at + ": " + message);
-// }
