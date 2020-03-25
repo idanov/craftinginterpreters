@@ -125,16 +125,16 @@ impl<'a> Scanner<'a> {
             Some(x @ '>') => self.add_token(TokenType::Greater, x.to_string()),
 
             Some('/') if self.munch('/') => {
-                    let _: String = self.chars.by_ref().take_while(|&x| x != '\n').collect();
-                    self.line += 1;
-                    self.current = 0;
-                },
+                let _: String = self.chars.by_ref().take_while(|&x| x != '\n').collect();
+                self.line += 1;
+                self.current = 0;
+            },
             Some(x @ '/') => self.add_token(TokenType::Slash, x.to_string()),
             Some(' ') | Some('\t') | Some('\r') => (),
             Some('\n') => {
                 self.line += 1;
                 self.current = 0;
-            }
+            },
 
             Some('"') => {
                 let mut lines = 0;
@@ -170,6 +170,7 @@ impl<'a> Scanner<'a> {
                     None => self.add_token(TokenType::Identifier, ident),
                 }
             },
+
             _ => {
                 self.tokens.push(Err(format!("Error: Unexpected character at line {:?}.", self.line)))
             },
