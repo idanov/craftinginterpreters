@@ -93,7 +93,7 @@ impl<'a> Scanner<'a> {
     }
 
     pub fn scan_tokens(&mut self) -> &Vec<Result<Token, String>> {
-        while self.chars.peek() != None {
+        while self.chars.peek().is_some() {
             self.scan_token();
         }
 
