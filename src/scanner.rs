@@ -41,7 +41,7 @@ pub struct Token {
 
 pub struct Scanner<'a> {
     chars: Peekable<Chars<'a>>,
-    tokens: Vec<Token>,
+    tokens: Vec<Result<Token, String>>,
     current: usize,
     line: usize,
     keywords: HashMap<&'a str, TokenType>,
@@ -92,7 +92,7 @@ impl<'a> Scanner<'a> {
         self.chars.next()
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<Token> {
+    pub fn scan_tokens(&mut self) -> &Vec<Result<Token, String>> {
         while self.chars.peek() != None {
             self.scan_token();
         }
@@ -146,7 +146,9 @@ impl<'a> Scanner<'a> {
                 }).collect();
                 self.add_token(TokenType::String, res);
                 self.line += lines;
-                // TODO: if self.chars.peek() is None (file ended), raise error for unterminated string
+                if self.chars.peek().is_none() {
+                    self.tokens.push(Err(format!("Error: Unterminated string at line {:?}.", self.line)))
+                }
             },
 
             Some(x) if x.is_numeric() => {
@@ -168,15 +170,13 @@ impl<'a> Scanner<'a> {
                     None => self.add_token(TokenType::Identifier, ident),
                 }
             },
-
             _ => {
-                // TODO: raise error for unexpected character
-                ()
+                self.tokens.push(Err(format!("Error: Unexpected character at line {:?}.", self.line)))
             },
         }
     }
 
     fn add_token(&mut self, token: TokenType, lexeme: String) {
-        self.tokens.push(Token{token, lexeme, line: self.line});
+        self.tokens.push(Ok(Token{token, lexeme, line: self.line}));
     }
 }
