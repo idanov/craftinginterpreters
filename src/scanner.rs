@@ -36,7 +36,7 @@ pub enum TokenType {
 pub struct Token {
     token: TokenType,
     lexeme: String,
-    line: usize,
+    line: usize
 }
 
 pub struct Scanner<'a> {

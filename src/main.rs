@@ -35,6 +35,7 @@ fn run_prompt() {
         io::stdin().read_line(&mut contents)
             .expect("Something went wrong reading the line");
         run(contents);
+        // had_error = false;
     }
 }
 
@@ -46,3 +47,11 @@ fn run(source: String) {
         println!("{:?}", token);
     }
 }
+
+// fn error(line: usize, message: String) {
+//     report(line, "".to_string(), message);
+// }
+
+// fn report(line: usize, where_str: String, message: String) {
+//     eprintln!("[line {}] Error{}: {}", line, where_str, message);
+// }
