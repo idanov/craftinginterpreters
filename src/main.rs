@@ -7,15 +7,14 @@ use std::io::Write;
 mod scanner;
 
 fn main() {
-    println!("Hello, world!");
     let args: Vec<String> = env::args().collect();
-    if args.len() > 1 {
-        println!("Usage: dataloch [script]");
-        exit(64);
-    } else if args.len() == 2 {
-        run_file(&args[1])
-    } else {
-        run_prompt()
+    match args.len() {
+        1 => run_prompt(),
+        2 => run_file(&args[1]),
+        _ => {
+            println!("Usage: craft [script]");
+            exit(64);
+        }
     }
 }
 
