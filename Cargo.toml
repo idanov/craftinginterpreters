@@ -1,5 +1,5 @@
 [package]
-name = "dataloch"
+name = "craft"
 version = "0.1.0"
 authors = ["Ivan Danov <idanov@users.noreply.github.com>"]
 edition = "2018"
