@@ -175,7 +175,7 @@ impl<'a> Scanner<'a> {
             },
             Some(x) if x.is_alphabetic() || x == '_' => {
                 let mut ident:String = String::from(x.to_string());
-                ident.extend(self.chars.take_while_ref(|y| y.is_alphanumeric()));
+                ident.extend(self.chars.take_while_ref(|y| y.is_alphanumeric() || *y == '_'));
                 let token = self.keywords.get(ident.as_str()).map(|y| y.clone());
                 match token {
                     Some(y) => self.add_token(y, String::from("")),
