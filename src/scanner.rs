@@ -148,6 +148,8 @@ impl<'a> Scanner<'a> {
                 self.line += lines;
                 if self.chars.peek().is_none() {
                     self.tokens.push(Err(format!("Error: Unterminated string at line {:?}.", self.line)))
+                } else {
+                    self.advance(); // consume final "
                 }
             },
 
