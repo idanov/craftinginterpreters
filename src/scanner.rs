@@ -1,7 +1,8 @@
 use std::str::Chars;
 use itertools::Itertools;
+use itertools::peek_nth;
 use std::collections::HashMap;
-use std::iter::Peekable;
+use itertools::structs::PeekNth;
 
 #[derive(Debug, Copy, Clone)]
 pub enum TokenType {
@@ -40,7 +41,7 @@ pub struct Token {
 }
 
 pub struct Scanner<'a> {
-    chars: Peekable<Chars<'a>>,
+    chars: PeekNth<Chars<'a>>,
     tokens: Vec<Result<Token, String>>,
     current: usize,
     line: usize,
@@ -69,7 +70,7 @@ impl<'a> Scanner<'a> {
         ].iter().cloned().collect();
 
         Scanner {
-            chars: source.chars().peekable(),
+            chars: peek_nth(source.chars()),
             tokens: Vec::new(),
             current: 0,
             line: 1,
@@ -78,13 +79,15 @@ impl<'a> Scanner<'a> {
     }
 
     fn munch(&mut self, expected: char) -> bool {
-        match self.chars.peek() {
-            Some(&x) if x == expected => {
-                self.advance();
-                true
-            }
-            _ => false,
-        }
+        self.chars.next_if_eq(&expected).is_some()
+    }
+
+    fn peek(&mut self) -> char {
+        *self.chars.peek().unwrap_or(&'\0')
+    }
+
+    fn peek_next(&mut self) -> char {
+        *self.chars.peek_nth(1).unwrap_or(&'\0')
     }
 
     fn advance(&mut self) -> Option<char> {
@@ -138,7 +141,7 @@ impl<'a> Scanner<'a> {
 
             Some('"') => {
                 let mut lines = 0;
-                let res: String = self.chars.by_ref().take_while(|&x| {
+                let res: String = self.chars.take_while_ref(|&x| {
                     if x == '\n' {
                         lines += 1;
                     };
