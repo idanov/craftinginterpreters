@@ -34,9 +34,17 @@ pub enum TokenType {
 }
 
 #[derive(Debug)]
+pub enum Literal {
+    Double(f64),
+    String(String),
+    None
+}
+
+#[derive(Debug)]
 pub struct Token {
     token: TokenType,
     lexeme: String,
+    literal: Literal,
     line: usize
 }
 
@@ -164,7 +172,7 @@ impl<'a> Scanner<'a> {
                     digits.extend(self.chars.next());
                     digits.extend(self.chars.take_while_ref(|y| y.is_numeric()));
                 }
-                self.add_token(TokenType::Number, digits);
+                self.add_numeric_token(TokenType::Number, digits);
             },
             Some(x) if x.is_alphabetic() => {
                 let mut ident:String = String::from(x.to_string());
@@ -183,6 +191,11 @@ impl<'a> Scanner<'a> {
     }
 
     fn add_token(&mut self, token: TokenType, lexeme: String) {
-        self.tokens.push(Ok(Token{token, lexeme, line: self.line}));
+        self.tokens.push(Ok(Token{token, lexeme, literal: Literal::None, line: self.line}));
+    }
+
+    fn add_numeric_token(&mut self, token: TokenType, lexeme: String) {
+        let num = lexeme.parse::<f64>().unwrap_or(0.0);
+        self.tokens.push(Ok(Token { token, lexeme, literal: Literal::Double(num), line: self.line }));
     }
 }
