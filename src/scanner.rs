@@ -164,13 +164,12 @@ impl<'a> Scanner<'a> {
                 }
             },
 
-            Some(x) if x.is_numeric() => {
+            Some(x) if x.is_ascii_digit() => {
                 let mut digits:String = String::from(x.to_string());
-                digits.extend(self.chars.take_while_ref(|y| y.is_numeric()));
-                let mut lookahead = self.chars.clone();
-                if lookahead.next().filter(|y| *y == '.').is_some() && lookahead.next().filter(|y| y.is_numeric()).is_some() {
+                digits.extend(self.chars.take_while_ref(|y| y.is_ascii_digit()));
+                if self.peek() == '.' && self.peek_next().is_ascii_digit() {
                     digits.extend(self.chars.next());
-                    digits.extend(self.chars.take_while_ref(|y| y.is_numeric()));
+                    digits.extend(self.chars.take_while_ref(|y| y.is_ascii_digit()));
                 }
                 self.add_numeric_token(TokenType::Number, digits);
             },
