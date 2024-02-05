@@ -155,7 +155,7 @@ impl<'a> Scanner<'a> {
                     };
                     x != '"'
                 }).collect();
-                self.add_token(TokenType::String, res);
+                self.add_string_token(TokenType::String, res);
                 self.line += lines;
                 if self.chars.peek().is_none() {
                     self.tokens.push(Err(format!("Error: Unterminated string at line {:?}.", self.line)))
@@ -196,5 +196,9 @@ impl<'a> Scanner<'a> {
     fn add_numeric_token(&mut self, token: TokenType, lexeme: String) {
         let num = lexeme.parse::<f64>().unwrap_or(0.0);
         self.tokens.push(Ok(Token { token, lexeme, literal: Literal::Double(num), line: self.line }));
+    }
+
+    fn add_string_token(&mut self, token: TokenType, lexeme: String) {
+        self.tokens.push(Ok(Token { token, lexeme: lexeme.clone(), literal: Literal::String(lexeme), line: self.line }));
     }
 }
