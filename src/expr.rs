@@ -1,7 +1,7 @@
-use scanner::Token;
-use scanner::Literal;
+use crate::scanner::Token;
+use crate::scanner::Literal;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Clone)]
 pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),

@@ -5,6 +5,8 @@ use std::io;
 use std::io::Write;
 
 mod scanner;
+mod parser;
+mod expr;
 
 fn main() {
     let args: Vec<String> = env::args().collect();

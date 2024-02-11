@@ -4,7 +4,7 @@ use itertools::peek_nth;
 use std::collections::HashMap;
 use itertools::structs::PeekNth;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
     LeftParen,
@@ -42,10 +42,10 @@ pub enum Literal {
 
 #[derive(Debug, Clone)]
 pub struct Token {
-    token: TokenType,
-    lexeme: String,
-    literal: Literal,
-    line: usize
+    pub token: TokenType,
+    pub lexeme: String,
+    pub literal: Literal,
+    pub line: usize
 }
 
 pub struct Scanner<'a> {
