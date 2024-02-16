@@ -31,8 +31,19 @@ impl Parser {
         return expr;
     }
 
-    fn comparison(&self) -> Expr {
-        todo!()
+    fn comparison(&mut self) -> Expr {
+        let mut expr: Expr = self.term();
+
+        while self.munch(&[TokenType::Greater,
+                           TokenType::GreaterEqual,
+                           TokenType::Less,
+                           TokenType::LessEqual
+                          ]) {
+            let operator: Token = self.previous();
+            let right: Expr = self.term();
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+        return expr;
     }
 
     fn munch(&mut self, types: &[TokenType]) -> bool {
@@ -67,5 +78,9 @@ impl Parser {
 
     fn previous(&mut self) -> Token {
         return self.tokens.peek_nth(0).expect("No more tokens to be processed").clone();
+    }
+
+    fn term(&self) -> Expr {
+        todo!()
     }
 }
