@@ -46,12 +46,27 @@ impl Parser {
         return expr;
     }
 
+    fn term(&mut self) -> Expr {
+        let mut expr: Expr = self.factor();
+
+        while self.munch(&[TokenType::Minus, TokenType::Plus]) {
+            let operator: Token = self.previous();
+            let right: Expr = self.factor();
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+        return expr;
+    }
+
+    fn factor(&mut self) -> Expr {
+        todo!();
+    }
+
     fn munch(&mut self, types: &[TokenType]) -> bool {
         for token in types {
-           if self.check(*token) {
-               self.advance();
-               return true;
-           }
+            if self.check(*token) {
+                self.advance();
+                return true;
+            }
         }
         return false;
     }
@@ -78,9 +93,5 @@ impl Parser {
 
     fn previous(&mut self) -> Token {
         return self.tokens.peek_nth(0).expect("No more tokens to be processed").clone();
-    }
-
-    fn term(&self) -> Expr {
-        todo!()
     }
 }
