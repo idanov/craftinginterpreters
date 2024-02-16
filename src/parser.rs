@@ -1,5 +1,5 @@
 use crate::expr::Expr;
-use crate::scanner::{Token, TokenType};
+use crate::scanner::{Token, TokenType, Literal};
 use std::vec::IntoIter;
 use itertools::peek_nth;
 use itertools::structs::PeekNth;
@@ -78,6 +78,29 @@ impl Parser {
     }
 
     fn primary(&mut self) -> Expr {
+        if self.munch(&[TokenType::False]) {
+            return Expr::Literal(Literal::Boolean(false));
+        }
+        if self.munch(&[TokenType::True]) {
+            return Expr::Literal(Literal::Boolean(true));
+        }
+        if self.munch(&[TokenType::False]) {
+            return Expr::Literal(Literal::None);
+        }
+
+        if self.munch(&[TokenType::Number, TokenType::String]) {
+            return Expr::Literal(self.previous().literal);
+        }
+
+        if self.munch(&[TokenType::LeftParen]) {
+            let expr: Expr = self.expression();
+            self.consume(TokenType::RightParen, "Expect ')' after expression.");
+            return Expr::Grouping(Box::new(expr));
+        }
+        return Expr::Literal(Literal::None); // this one is temporary, but it should return error
+    }
+
+    fn consume(&mut self, types: TokenType, message: &str) {
         todo!();
     }
 

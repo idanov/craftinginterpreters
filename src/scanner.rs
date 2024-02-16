@@ -37,6 +37,7 @@ pub enum TokenType {
 pub enum Literal {
     Double(f64),
     String(String),
+    Boolean(bool),
     None
 }
 
