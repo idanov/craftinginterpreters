@@ -58,6 +58,17 @@ impl Parser {
     }
 
     fn factor(&mut self) -> Expr {
+        let mut expr: Expr = self.unary();
+
+        while self.munch(&[TokenType::Slash, TokenType::Star]) {
+            let operator: Token = self.previous();
+            let right: Expr = self.unary();
+            expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
+        }
+        return expr;
+    }
+
+    fn unary(&mut self) -> Expr {
         todo!();
     }
 
