@@ -69,6 +69,15 @@ impl Parser {
     }
 
     fn unary(&mut self) -> Expr {
+        if self.munch(&[TokenType::Bang, TokenType::Minus]) {
+            let operator: Token = self.previous();
+            let right: Expr = self.unary();
+            return Expr::Unary(operator, Box::new(right));
+        }
+        return self.primary();
+    }
+
+    fn primary(&mut self) -> Expr {
         todo!();
     }
 
