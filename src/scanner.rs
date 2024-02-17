@@ -46,7 +46,8 @@ pub struct Token {
     pub token: TokenType,
     pub lexeme: String,
     pub literal: Literal,
-    pub line: usize
+    pub line: usize,
+    pub column: usize
 }
 
 pub struct Scanner<'a> {
@@ -88,20 +89,22 @@ impl<'a> Scanner<'a> {
     }
 
     fn munch(&mut self, expected: char) -> bool {
-        self.chars.next_if_eq(&expected).is_some()
+        let res = self.chars.next_if_eq(&expected).is_some();
+        self.current += res as usize;
+        return res;
     }
 
     fn peek(&mut self) -> char {
-        *self.chars.peek().unwrap_or(&'\0')
+        return *self.chars.peek().unwrap_or(&'\0')
     }
 
     fn peek_next(&mut self) -> char {
-        *self.chars.peek_nth(1).unwrap_or(&'\0')
+        return *self.chars.peek_nth(1).unwrap_or(&'\0')
     }
 
     fn advance(&mut self) -> Option<char> {
         self.current += 1;
-        self.chars.next()
+        return self.chars.next()
     }
 
     pub fn scan_tokens(&mut self) -> &Vec<Result<Token, String>> {
@@ -150,17 +153,21 @@ impl<'a> Scanner<'a> {
 
             Some('"') => {
                 let mut lines = 0;
+                let mut count = self.current;
                 let res: String = self.chars.take_while_ref(|&x| {
+                    count += 1;
                     if x == '\n' {
                         lines += 1;
+                        count = 0;
                     };
                     x != '"'
                 }).collect();
-                self.add_string_token(TokenType::String, res);
-                self.line += lines;
                 if self.chars.peek().is_none() {
-                    self.tokens.push(Err(format!("Error: Unterminated string at line {:?}.", self.line)))
+                    self.tokens.push(Err(format!("Error: Unterminated string at line {:?} and column {:?}.", self.line, self.current)))
                 } else {
+                    self.add_string_token(TokenType::String, res);
+                    self.line += lines;
+                    self.current = count;
                     self.advance(); // consume final "
                 }
             },
@@ -172,34 +179,38 @@ impl<'a> Scanner<'a> {
                     digits.extend(self.chars.next());
                     digits.extend(self.chars.take_while_ref(|y| y.is_ascii_digit()));
                 }
+                let count = digits.len() - 1;
                 self.add_numeric_token(TokenType::Number, digits);
+                self.current += count;
             },
             Some(x) if x.is_alphabetic() || x == '_' => {
                 let mut ident:String = String::from(x.to_string());
                 ident.extend(self.chars.take_while_ref(|y| y.is_alphanumeric() || *y == '_'));
+                let count = ident.len() - 1;
                 let token = self.keywords.get(ident.as_str()).map(|y| y.clone());
                 match token {
                     Some(y) => self.add_token(y, String::from("")),
                     None => self.add_token(TokenType::Identifier, ident),
                 }
+                self.current += count;
             },
 
             _ => {
-                self.tokens.push(Err(format!("Error: Unexpected character at line {:?}.", self.line)))
+                self.tokens.push(Err(format!("Error: Unexpected character at line {:?} and column {:?}.", self.line, self.current)))
             },
         }
     }
 
     fn add_token(&mut self, token: TokenType, lexeme: String) {
-        self.tokens.push(Ok(Token{token, lexeme, literal: Literal::None, line: self.line}));
+        self.tokens.push(Ok(Token{token, lexeme, literal: Literal::None, line: self.line, column: self.current }));
     }
 
     fn add_numeric_token(&mut self, token: TokenType, lexeme: String) {
         let num = lexeme.parse::<f64>().unwrap_or(0.0);
-        self.tokens.push(Ok(Token { token, lexeme, literal: Literal::Double(num), line: self.line }));
+        self.tokens.push(Ok(Token { token, lexeme, literal: Literal::Double(num), line: self.line, column: self.current }));
     }
 
     fn add_string_token(&mut self, token: TokenType, lexeme: String) {
-        self.tokens.push(Ok(Token { token, lexeme: lexeme.clone(), literal: Literal::String(lexeme), line: self.line }));
+        self.tokens.push(Ok(Token { token, lexeme: lexeme.clone(), literal: Literal::String(lexeme), line: self.line, column: self.current }));
     }
 }
