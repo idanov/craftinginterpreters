@@ -8,6 +8,9 @@ mod scanner;
 mod parser;
 mod expr;
 
+use parser::Parser;
+use expr::Expr;
+
 fn main() {
     let args: Vec<String> = env::args().collect();
     match args.len() {
@@ -44,10 +47,16 @@ fn run_prompt() {
 fn run(source: String) {
     // scan tokens and print them
     let mut scan = scanner::Scanner::new(&source);
-    let tokens = scan.scan_tokens();
-    for token in tokens {
+    let raw_tokens = scan.scan_tokens();
+    println!("-------- Scanner results ------");
+    for token in raw_tokens {
         println!("{:?}", token);
     }
+    println!("-------- Parser results ------");
+    let tokens = raw_tokens.into_iter().flatten().cloned().collect::<Vec<_>>();
+    let mut parser = Parser::new(tokens);
+    let expr: Result<Expr, String> = parser.parse();
+    println!("{:?}", expr);
 }
 
 // fn error(line: usize, message: String) {
