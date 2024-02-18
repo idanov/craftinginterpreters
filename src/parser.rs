@@ -16,23 +16,27 @@ impl Parser {
         }
     }
 
-    fn expression(&mut self) -> Expr {
+    pub fn parse(&mut self) -> Result<Expr, String> {
+       return self.expression();
+    }
+
+    fn expression(&mut self) -> Result<Expr, String> {
        return self.equality();
     }
 
-    fn equality(&mut self) -> Expr {
-        let mut expr: Expr = self.comparison();
+    fn equality(&mut self) -> Result<Expr, String> {
+        let mut expr: Expr = self.comparison()?;
 
         while self.munch(&[TokenType::BangEqual, TokenType::EqualEqual]) {
             let operator: Token = self.previous();
-            let right: Expr = self.comparison();
+            let right: Expr = self.comparison()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-        return expr;
+        return Ok(expr);
     }
 
-    fn comparison(&mut self) -> Expr {
-        let mut expr: Expr = self.term();
+    fn comparison(&mut self) -> Result<Expr, String> {
+        let mut expr: Expr = self.term()?;
 
         while self.munch(&[TokenType::Greater,
                            TokenType::GreaterEqual,
@@ -40,68 +44,102 @@ impl Parser {
                            TokenType::LessEqual
                           ]) {
             let operator: Token = self.previous();
-            let right: Expr = self.term();
+            let right: Expr = self.term()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-        return expr;
+        return Ok(expr);
     }
 
-    fn term(&mut self) -> Expr {
-        let mut expr: Expr = self.factor();
+    fn term(&mut self) -> Result<Expr, String> {
+        let mut expr: Expr = self.factor()?;
 
         while self.munch(&[TokenType::Minus, TokenType::Plus]) {
             let operator: Token = self.previous();
-            let right: Expr = self.factor();
+            let right: Expr = self.factor()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-        return expr;
+        return Ok(expr);
     }
 
-    fn factor(&mut self) -> Expr {
-        let mut expr: Expr = self.unary();
+    fn factor(&mut self) -> Result<Expr, String> {
+        let mut expr: Expr = self.unary()?;
 
         while self.munch(&[TokenType::Slash, TokenType::Star]) {
             let operator: Token = self.previous();
-            let right: Expr = self.unary();
+            let right: Expr = self.unary()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-        return expr;
+        return Ok(expr);
     }
 
-    fn unary(&mut self) -> Expr {
+    fn unary(&mut self) -> Result<Expr, String> {
         if self.munch(&[TokenType::Bang, TokenType::Minus]) {
             let operator: Token = self.previous();
-            let right: Expr = self.unary();
-            return Expr::Unary(operator, Box::new(right));
+            let right: Expr = self.unary()?;
+            return Ok(Expr::Unary(operator, Box::new(right)) );
         }
         return self.primary();
     }
 
-    fn primary(&mut self) -> Expr {
+    fn primary(&mut self) -> Result<Expr, String> {
         if self.munch(&[TokenType::False]) {
-            return Expr::Literal(Literal::Boolean(false));
+            return Ok(Expr::Literal(Literal::Boolean(false)));
         }
         if self.munch(&[TokenType::True]) {
-            return Expr::Literal(Literal::Boolean(true));
+            return Ok(Expr::Literal(Literal::Boolean(true)));
         }
         if self.munch(&[TokenType::False]) {
-            return Expr::Literal(Literal::None);
+            return Ok(Expr::Literal(Literal::None));
         }
 
         if self.munch(&[TokenType::Number, TokenType::String]) {
-            return Expr::Literal(self.previous().literal);
+            return Ok(Expr::Literal(self.previous().literal));
         }
 
         if self.munch(&[TokenType::LeftParen]) {
-            let expr: Expr = self.expression();
-            self.consume(TokenType::RightParen, "Expect ')' after expression.");
-            return Expr::Grouping(Box::new(expr));
+            let expr: Expr = self.expression()?;
+            self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
+            return Ok(Expr::Grouping(Box::new(expr)));
         }
-        return Expr::Literal(Literal::None); // this one is temporary, but it should return error
+        return Parser::error::<Expr>(self.peek(), "Expect expression.");
     }
 
-    fn consume(&mut self, types: TokenType, message: &str) {
-        todo!();
+    fn consume(&mut self, types: TokenType, message: &str) -> Result<Token, String> {
+        if self.check(types) {
+            return Ok(self.advance());
+        }
+        return Parser::error::<Token>(self.peek(), message);
+    }
+
+    fn error<T>(token: Token, message: &str) -> Result<T, String> {
+        if token.token == TokenType::EOF {
+            return Err(format!("[line {}] Error at end: {}", token.line, message));
+        } else {
+            return Err(format!("[line {}] Error at {:?}: {}", token.line, token, message));
+        }
+    }
+
+    fn synchronize(&mut self) {
+        self.advance();
+
+        while !self.is_at_end() {
+            if self.previous().token == TokenType::Semicolon {
+                return;
+            }
+
+            if [TokenType::Class,
+                TokenType::Fun,
+                TokenType::Var,
+                TokenType::For,
+                TokenType::If,
+                TokenType::While,
+                TokenType::Print,
+                TokenType::Return].contains(&(self.peek().token)) {
+                return;
+            }
+
+            self.advance();
+        }
     }
 
     fn munch(&mut self, types: &[TokenType]) -> bool {
