@@ -1,3 +1,4 @@
+use std::fmt;
 use std::str::Chars;
 use itertools::Itertools;
 use itertools::peek_nth;
@@ -39,6 +40,17 @@ pub enum Literal {
     String(String),
     Boolean(bool),
     None
+}
+
+impl fmt::Display for Literal {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Literal::Double(num) => write!(f, "{}", num),
+            Literal::String(s) => write!(f, "{}", s),
+            Literal::Boolean(b) => write!(f, "{}", b),
+            Literal::None => write!(f, "nil"),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -189,7 +201,7 @@ impl<'a> Scanner<'a> {
                 let count = ident.len() - 1;
                 let token = self.keywords.get(ident.as_str()).map(|y| y.clone());
                 match token {
-                    Some(y) => self.add_token(y, String::from("")),
+                    Some(y) => self.add_token(y, ident),
                     None => self.add_token(TokenType::Identifier, ident),
                 }
                 self.current += count;

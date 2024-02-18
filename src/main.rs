@@ -56,7 +56,10 @@ fn run(source: String) {
     let tokens = raw_tokens.into_iter().flatten().cloned().collect::<Vec<_>>();
     let mut parser = Parser::new(tokens);
     let expr: Result<Expr, String> = parser.parse();
-    println!("{:?}", expr);
+    match expr {
+        Ok(x) => println!("{}", x),
+        Err(e) => println!("{}", e),
+    }
 }
 
 // fn error(line: usize, message: String) {
