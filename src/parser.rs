@@ -6,13 +6,14 @@ use itertools::structs::PeekNth;
 
 pub struct Parser {
     tokens: PeekNth<IntoIter<Token>>,
+    prev: Option<Token>,
 }
-
 
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
         Parser {
             tokens: peek_nth(tokens.into_iter()),
+            prev: None,
         }
     }
 
@@ -42,7 +43,7 @@ impl Parser {
                            TokenType::GreaterEqual,
                            TokenType::Less,
                            TokenType::LessEqual
-                          ]) {
+        ]) {
             let operator: Token = self.previous();
             let right: Expr = self.term()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
@@ -88,7 +89,7 @@ impl Parser {
         if self.munch(&[TokenType::True]) {
             return Ok(Expr::Literal(Literal::Boolean(true)));
         }
-        if self.munch(&[TokenType::False]) {
+        if self.munch(&[TokenType::Nil]) {
             return Ok(Expr::Literal(Literal::None));
         }
 
@@ -101,11 +102,12 @@ impl Parser {
             self.consume(TokenType::RightParen, "Expect ')' after expression.")?;
             return Ok(Expr::Grouping(Box::new(expr)));
         }
+
         return Parser::error::<Expr>(self.peek(), "Expect expression.");
     }
 
     fn consume(&mut self, types: TokenType, message: &str) -> Result<Token, String> {
-        if self.check(types) {
+        if self.check(&types) {
             return Ok(self.advance());
         }
         return Parser::error::<Token>(self.peek(), message);
@@ -144,7 +146,7 @@ impl Parser {
 
     fn munch(&mut self, types: &[TokenType]) -> bool {
         for token in types {
-            if self.check(*token) {
+            if self.check(&token) {
                 self.advance();
                 return true;
             }
@@ -152,14 +154,14 @@ impl Parser {
         return false;
     }
 
-    fn check(&mut self, token: TokenType) -> bool {
+    fn check(&mut self, token: &TokenType) -> bool {
         if self.is_at_end() { return false };
-        return self.peek().token == token;
+        return self.peek().token == *token;
     }
 
     fn advance(&mut self) -> Token {
         if !self.is_at_end() {
-            return self.tokens.next().expect("No more tokens to be processed");
+            self.prev = self.tokens.next();
         }
         return self.previous();
     }
@@ -169,10 +171,10 @@ impl Parser {
     }
 
     fn peek(&mut self) -> Token {
-        return self.tokens.peek_nth(1).expect("No more tokens to be processed").clone();
+        return self.tokens.peek().expect("No more tokens to be processed").clone();
     }
 
     fn previous(&mut self) -> Token {
-        return self.tokens.peek_nth(0).expect("No more tokens to be processed").clone();
+        return self.prev.clone().expect("No previous token to be processed").clone();
     }
 }
