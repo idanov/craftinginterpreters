@@ -11,6 +11,7 @@ mod interpreter;
 
 use parser::Parser;
 use expr::Expr;
+use interpreter::Interpreter;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -31,6 +32,7 @@ fn run_file(filename: &String) {
     // if had_error {
     //     exit(65);
     // }
+    // if (hadRuntimeError) System.exit(70);
 }
 
 fn run_prompt() {
@@ -48,6 +50,7 @@ fn run_prompt() {
 fn run(source: String) {
     // scan tokens and print them
     let mut scan = scanner::Scanner::new(&source);
+    let mut interpreter = Interpreter{};
     let raw_tokens = scan.scan_tokens();
     println!("-------- Scanner results ------");
     for token in raw_tokens {
@@ -57,9 +60,13 @@ fn run(source: String) {
     let tokens = raw_tokens.into_iter().flatten().cloned().collect::<Vec<_>>();
     let mut parser = Parser::new(tokens);
     let expr: Result<Expr, String> = parser.parse();
-    match expr {
+    match &expr {
         Ok(x) => println!("{}", x),
         Err(e) => println!("{}", e),
+    }
+    println!("-------- Interpreter results ------");
+    if let Ok(x) = &expr {
+        interpreter.interpret(&x);
     }
 }
 
