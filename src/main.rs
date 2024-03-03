@@ -7,6 +7,7 @@ use std::io::Write;
 mod scanner;
 mod parser;
 mod expr;
+mod interpreter;
 
 use parser::Parser;
 use expr::Expr;
