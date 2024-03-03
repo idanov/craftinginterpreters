@@ -16,7 +16,10 @@ impl Interpreter {
     }
 
     pub fn interpret(&mut self, expr: &Expr) {
-        self.evaluate(expr);
+        match self.evaluate(expr) {
+            Ok(lit) => println!("{}", lit),
+            Err(e) => eprintln!("{}", e),
+        }
     }
 
     fn eval_binary(&mut self, left: &Expr, op: &Token, right: &Expr) -> Result<Lit, String> {
@@ -26,20 +29,20 @@ impl Interpreter {
             (Lit::Double(lhs), TT::Minus, Lit::Double(rhs)) => Ok(Lit::Double(lhs - rhs)),
             (Lit::Double(lhs), TT::Slash, Lit::Double(rhs)) => Ok(Lit::Double(lhs / rhs)),
             (Lit::Double(lhs), TT::Star, Lit::Double(rhs)) => Ok(Lit::Double(lhs * rhs)),
-            (_, TT::Minus, _) => Err("Operands must be numbers.".to_string()),
-            (_, TT::Slash, _) => Err("Operands must be numbers.".to_string()),
-            (_, TT::Star, _) => Err("Operands must be numbers.".to_string()),
+            (_, TT::Minus, _) => Err(format!("[line {}:{}] Operands must be numbers.", op.line, op.column)),
+            (_, TT::Slash, _) => Err(format!("[line {}:{}] Operands must be numbers.", op.line, op.column)),
+            (_, TT::Star, _) => Err(format!("[line {}:{}] Operands must be numbers.", op.line, op.column)),
             (Lit::Double(lhs), TT::Plus, Lit::Double(rhs)) => Ok(Lit::Double(lhs + rhs)),
             (Lit::String(lhs), TT::Plus, Lit::String(rhs)) => Ok(Lit::String(lhs.to_string() + rhs)),
-            (_, TT::Plus, _) => Err("Operands must be two numbers or two strings.".to_string()),
+            (_, TT::Plus, _) => Err(format!("[line {}:{}] Operands must be numbers.", op.line, op.column)),
             (Lit::Double(lhs), TT::Greater, Lit::Double(rhs)) => Ok(Lit::Boolean(lhs > rhs)),
             (Lit::Double(lhs), TT::GreaterEqual, Lit::Double(rhs)) => Ok(Lit::Boolean(lhs >= rhs)),
             (Lit::Double(lhs), TT::Less, Lit::Double(rhs)) => Ok(Lit::Boolean(lhs < rhs)),
             (Lit::Double(lhs), TT::LessEqual, Lit::Double(rhs)) => Ok(Lit::Boolean(lhs <= rhs)),
-            (_, TT::Greater, _) => Err("Operands must be numbers.".to_string()),
-            (_, TT::GreaterEqual, _) => Err("Operands must be numbers.".to_string()),
-            (_, TT::Less, _) => Err("Operands must be numbers.".to_string()),
-            (_, TT::LessEqual, _) => Err("Operands must be numbers.".to_string()),
+            (_, TT::Greater, _) => Err(format!("[line {}:{}] Operands must be numbers.", op.line, op.column)),
+            (_, TT::GreaterEqual, _) => Err(format!("[line {}:{}] Operands must be numbers.", op.line, op.column)),
+            (_, TT::Less, _) => Err(format!("[line {}:{}] Operands must be numbers.", op.line, op.column)),
+            (_, TT::LessEqual, _) => Err(format!("[line {}:{}] Operands must be numbers.", op.line, op.column)),
             (_, TT::EqualEqual, _) => Ok(Lit::Boolean(Interpreter::is_equal(&lval, &rval))),
             (_, TT::BangEqual, _) => Ok(Lit::Boolean(!Interpreter::is_equal(&lval, &rval))),
             _ => Ok(Lit::None),
@@ -58,7 +61,7 @@ impl Interpreter {
         let lit = self.evaluate(expr)?;
         match (op.token, &lit) {
             (TT::Minus, Lit::Double(n)) => Ok(Lit::Double(-n)),
-            (TT::Minus, _) => Err("Operand must be a number.".to_string()),
+            (TT::Minus, _) => Err(format!("[line {}:{}] Operand must be a number.", op.line, op.column)),
             (TT::Bang, _) => Ok(Lit::Boolean(!Interpreter::is_truthy(&lit))),
             _ => Ok(Lit::None),
         }
