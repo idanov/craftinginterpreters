@@ -45,8 +45,9 @@ pub enum Literal {
 impl fmt::Display for Literal {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
+            Literal::Double(num) if num.fract() == 0.0 => write!(f, "{}", *num as i64),
             Literal::Double(num) => write!(f, "{}", num),
-            Literal::String(s) => write!(f, "{}", s),
+            Literal::String(s) => write!(f, "\"{}\"", s),
             Literal::Boolean(b) => write!(f, "{}", b),
             Literal::None => write!(f, "nil"),
         }
