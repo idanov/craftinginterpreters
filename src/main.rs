@@ -11,7 +11,7 @@ mod expr;
 mod interpreter;
 
 use parser::Parser;
-use expr::Expr;
+use stmt::Stmt;
 use interpreter::Interpreter;
 
 fn main() {
@@ -60,15 +60,18 @@ fn run(source: String) {
     println!("-------- Parser results ------");
     let tokens = raw_tokens.into_iter().flatten().cloned().collect::<Vec<_>>();
     let mut parser = Parser::new(tokens);
-    let expr: Result<Expr, String> = parser.parse();
-    match &expr {
-        Ok(x) => println!("{}", x),
-        Err(e) => println!("{}", e),
+    let statements: Vec<Result<Stmt, String>> = parser.parse();
+    for statement in &statements {
+        match &statement {
+            Ok(x) => println!("{}", x),
+            Err(e) => eprintln!("{}", e),
+        }
     }
     println!("-------- Interpreter results ------");
-    if let Ok(x) = &expr {
-        interpreter.interpret(&x);
-    }
+    let stmt_res: Result<Vec<Stmt>, String> = statements.into_iter().collect();
+    if let Err(e) = stmt_res.and_then(|x| interpreter.interpret(&x)) {
+        eprintln!("{}", e);
+    };
 }
 
 // fn error(line: usize, message: String) {

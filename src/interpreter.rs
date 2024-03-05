@@ -1,5 +1,6 @@
 use crate::expr::Expr;
 use crate::scanner::{Token, Literal as Lit, TokenType as TT};
+use crate::stmt::Stmt;
 
 pub struct Interpreter {
 }
@@ -15,10 +16,24 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self, expr: &Expr) {
-        match self.evaluate(expr) {
-            Ok(lit) => println!("{}", lit),
-            Err(e) => eprintln!("{}", e),
+    pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<(), String> {
+        for statement in statements {
+            self.execute(statement)?;
+        }
+        return Ok(())
+    }
+
+    fn execute(&mut self, stmt: &Stmt) -> Result<(), String> {
+        match stmt {
+            Stmt::Expression(expr) => {
+                self.evaluate(expr)?;
+                Ok(())
+            },
+            Stmt::Print(expr) => {
+                let value = self.evaluate(expr)?;
+                println!("{}", value);
+                Ok(())
+            },
         }
     }
 

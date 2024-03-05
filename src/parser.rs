@@ -1,5 +1,6 @@
 use crate::expr::Expr;
 use crate::scanner::{Token, TokenType, Literal};
+use crate::stmt::Stmt;
 use std::vec::IntoIter;
 use itertools::peek_nth;
 use itertools::structs::PeekNth;
@@ -38,8 +39,33 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Result<Expr, String> {
-       return self.expression();
+    pub fn parse(&mut self) -> Vec<Result<Stmt, String>> {
+       let mut statements: Vec<Result<Stmt, String>> = Vec::new();
+        while !self.is_at_end() {
+            statements.push(self.statement());
+        }
+
+       return statements;
+    }
+
+    fn statement(&mut self) -> Result<Stmt, String> {
+        if self.munch(&[TokenType::Print]) {
+            return self.print_statement();
+        }
+
+        return self.expression_statement();
+    }
+
+    fn print_statement(&mut self) -> Result<Stmt, String> {
+        let value = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
+        return Ok(Stmt::Print(value));
+    }
+
+    fn expression_statement(&mut self) -> Result<Stmt, String> {
+        let expr = self.expression()?;
+        self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
+        return Ok(Stmt::Expression(expr));
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
@@ -136,9 +162,9 @@ impl Parser {
 
     fn error<T>(token: Token, message: &str) -> Result<T, String> {
         if token.token == TokenType::EOF {
-            return Err(format!("[line {}] Error at end: {}", token.line, message));
+            return Err(format!("[line {}:{}] Error at end: {}", token.line, token.column, message));
         } else {
-            return Err(format!("[line {}] Error at {:?}: {}", token.line, token, message));
+            return Err(format!("[line {}:{}] Error at {:?}: {}", token.line, token.column, token, message));
         }
     }
 
