@@ -1,18 +1,18 @@
 use std::env;
-use std::process::exit;
 use std::fs;
 use std::io;
 use std::io::Write;
+use std::process::exit;
 
-mod scanner;
-mod parser;
-mod stmt;
 mod expr;
 mod interpreter;
+mod parser;
+mod scanner;
+mod stmt;
 
+use interpreter::Interpreter;
 use parser::Parser;
 use stmt::Stmt;
-use interpreter::Interpreter;
 
 fn main() {
     let args: Vec<String> = env::args().collect();
@@ -27,8 +27,7 @@ fn main() {
 }
 
 fn run_file(filename: &String) {
-    let contents = fs::read_to_string(filename)
-        .expect("Something went wrong reading the file");
+    let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
     run(contents);
     // if had_error {
     //     exit(65);
@@ -41,7 +40,8 @@ fn run_prompt() {
         print!(">>> ");
         io::stdout().flush().unwrap();
         let mut contents = String::new();
-        io::stdin().read_line(&mut contents)
+        io::stdin()
+            .read_line(&mut contents)
             .expect("Something went wrong reading the line");
         run(contents);
         // had_error = false;
@@ -51,14 +51,18 @@ fn run_prompt() {
 fn run(source: String) {
     // scan tokens and print them
     let mut scan = scanner::Scanner::new(&source);
-    let mut interpreter = Interpreter{};
+    let mut interpreter = Interpreter {};
     let raw_tokens = scan.scan_tokens();
     println!("-------- Scanner results ------");
     for token in raw_tokens {
         println!("{:?}", token);
     }
     println!("-------- Parser results ------");
-    let tokens = raw_tokens.into_iter().flatten().cloned().collect::<Vec<_>>();
+    let tokens = raw_tokens
+        .into_iter()
+        .flatten()
+        .cloned()
+        .collect::<Vec<_>>();
     let mut parser = Parser::new(tokens);
     let statements: Vec<Result<Stmt, String>> = parser.parse();
     for statement in &statements {

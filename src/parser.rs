@@ -1,9 +1,9 @@
 use crate::expr::Expr;
-use crate::scanner::{Token, TokenType, Literal};
+use crate::scanner::{Literal, Token, TokenType};
 use crate::stmt::Stmt;
-use std::vec::IntoIter;
 use itertools::peek_nth;
 use itertools::structs::PeekNth;
+use std::vec::IntoIter;
 
 pub struct Parser {
     tokens: PeekNth<IntoIter<Token>>,
@@ -40,12 +40,12 @@ impl Parser {
     }
 
     pub fn parse(&mut self) -> Vec<Result<Stmt, String>> {
-       let mut statements: Vec<Result<Stmt, String>> = Vec::new();
+        let mut statements: Vec<Result<Stmt, String>> = Vec::new();
         while !self.is_at_end() {
             statements.push(self.statement());
         }
 
-       return statements;
+        return statements;
     }
 
     fn statement(&mut self) -> Result<Stmt, String> {
@@ -69,7 +69,7 @@ impl Parser {
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
-       return self.equality();
+        return self.equality();
     }
 
     fn equality(&mut self) -> Result<Expr, String> {
@@ -86,10 +86,11 @@ impl Parser {
     fn comparison(&mut self) -> Result<Expr, String> {
         let mut expr: Expr = self.term()?;
 
-        while self.munch(&[TokenType::Greater,
-                           TokenType::GreaterEqual,
-                           TokenType::Less,
-                           TokenType::LessEqual
+        while self.munch(&[
+            TokenType::Greater,
+            TokenType::GreaterEqual,
+            TokenType::Less,
+            TokenType::LessEqual,
         ]) {
             let operator: Token = self.previous();
             let right: Expr = self.term()?;
@@ -124,7 +125,7 @@ impl Parser {
         if self.munch(&[TokenType::Bang, TokenType::Minus]) {
             let operator: Token = self.previous();
             let right: Expr = self.unary()?;
-            return Ok(Expr::Unary(operator, Box::new(right)) );
+            return Ok(Expr::Unary(operator, Box::new(right)));
         }
         return self.primary();
     }
@@ -162,9 +163,15 @@ impl Parser {
 
     fn error<T>(token: Token, message: &str) -> Result<T, String> {
         if token.token == TokenType::EOF {
-            return Err(format!("[line {}:{}] Error at end: {}", token.line, token.column, message));
+            return Err(format!(
+                "[line {}:{}] Error at end: {}",
+                token.line, token.column, message
+            ));
         } else {
-            return Err(format!("[line {}:{}] Error at {:?}: {}", token.line, token.column, token, message));
+            return Err(format!(
+                "[line {}:{}] Error at {:?}: {}",
+                token.line, token.column, token, message
+            ));
         }
     }
 
@@ -176,14 +183,18 @@ impl Parser {
                 return;
             }
 
-            if [TokenType::Class,
+            if [
+                TokenType::Class,
                 TokenType::Fun,
                 TokenType::Var,
                 TokenType::For,
                 TokenType::If,
                 TokenType::While,
                 TokenType::Print,
-                TokenType::Return].contains(&(self.peek().token)) {
+                TokenType::Return,
+            ]
+            .contains(&(self.peek().token))
+            {
                 return;
             }
 
@@ -202,7 +213,9 @@ impl Parser {
     }
 
     fn check(&mut self, token: &TokenType) -> bool {
-        if self.is_at_end() { return false };
+        if self.is_at_end() {
+            return false;
+        };
         return self.peek().token == *token;
     }
 
@@ -218,10 +231,18 @@ impl Parser {
     }
 
     fn peek(&mut self) -> Token {
-        return self.tokens.peek().expect("No more tokens to be processed").clone();
+        return self
+            .tokens
+            .peek()
+            .expect("No more tokens to be processed")
+            .clone();
     }
 
     fn previous(&mut self) -> Token {
-        return self.prev.clone().expect("No previous token to be processed").clone();
+        return self
+            .prev
+            .clone()
+            .expect("No previous token to be processed")
+            .clone();
     }
 }
