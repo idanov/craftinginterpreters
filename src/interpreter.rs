@@ -11,6 +11,7 @@ impl Interpreter {
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(&lit),
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
+            Expr::Variable(_) => Err("Unimplemented yet.".to_string()),
         }
     }
 
@@ -32,6 +33,7 @@ impl Interpreter {
                 println!("{}", value);
                 Ok(())
             }
+            Stmt::Var(name, val) => Err("Unimplemented yet.".to_string()),
         }
     }
 

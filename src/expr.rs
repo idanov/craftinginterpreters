@@ -8,6 +8,7 @@ pub enum Expr {
     Grouping(Box<Expr>),
     Literal(Literal),
     Unary(Token, Box<Expr>),
+    Variable(Token),
 }
 
 impl fmt::Display for Expr {
@@ -17,6 +18,7 @@ impl fmt::Display for Expr {
             Expr::Grouping(expr) => write!(f, "(group {})", expr),
             Expr::Literal(lit) => write!(f, "{}", lit),
             Expr::Unary(op, expr) => write!(f, "({} {})", op.lexeme, expr),
+            Expr::Variable(ident) => write!(f, "{}", ident.lexeme),
         }
     }
 }

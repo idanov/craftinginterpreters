@@ -1,10 +1,11 @@
-use crate::expr::Expr;
+use crate::{expr::Expr, scanner::Token};
 use std::fmt;
 
 #[derive(Debug, Clone)]
 pub enum Stmt {
     Expression(Expr),
     Print(Expr),
+    Var(Token, Option<Expr>),
 }
 
 impl fmt::Display for Stmt {
@@ -12,6 +13,8 @@ impl fmt::Display for Stmt {
         match self {
             Stmt::Expression(expr) => write!(f, "{}", expr),
             Stmt::Print(expr) => write!(f, "(print {})", expr),
+            Stmt::Var(token, Some(expr)) => write!(f, "(var {} {})", token.lexeme, expr),
+            Stmt::Var(token, None) => write!(f, "(var {} nil)", token.lexeme),
         }
     }
 }
