@@ -51,12 +51,36 @@ impl Parser {
     pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
         let mut statements: Vec<Stmt> = Vec::new();
         while !self.is_at_end() {
-            let stmt = self.statement()?;
+            let stmt = self.declaration();
             println!("Debug {:?}", stmt);
-            statements.push(stmt);
+            if let Ok(x) = stmt {
+                statements.push(x);
+            } else {
+                self.synchronize();
+            }
         }
 
         return Ok(statements);
+    }
+
+    fn declaration(&mut self) -> Result<Stmt, String> {
+        if self.munch(&[TokenType::Var]) {
+            return self.var_declaration();
+        } else {
+            return self.statement();
+        }
+    }
+
+    fn var_declaration(&mut self) -> Result<Stmt, String> {
+        let name = self.consume(TokenType::Identifier, "Expect variable name.")?;
+        let initializer: Option<Expr> = if self.munch(&[TokenType::Equal]) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+
+        self.consume(TokenType::Semicolon, "Expect ';' after variable declaration.")?;
+        return Ok(Stmt::Var(name, initializer));
     }
 
     fn statement(&mut self) -> Result<Stmt, String> {
@@ -154,6 +178,10 @@ impl Parser {
 
         if self.munch(&[TokenType::Number, TokenType::String]) {
             return Ok(Expr::Literal(self.previous().literal));
+        }
+
+        if self.munch(&[TokenType::Identifier]) {
+            return Ok(Expr::Variable(self.previous()));
         }
 
         if self.munch(&[TokenType::LeftParen]) {
@@ -258,4 +286,5 @@ impl Parser {
             .expect("No previous token to be processed")
             .clone();
     }
+
 }
