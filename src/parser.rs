@@ -12,7 +12,13 @@ pub struct Parser {
 
 /****************************************************************
 Parser grammar:
-    program        → statement* EOF ;
+
+    program        → declaration* EOF ;
+
+    declaration    → varDecl
+                   | statement ;
+
+    varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
     statement      → exprStmt
                    | printStmt ;
@@ -27,8 +33,11 @@ Parser grammar:
     factor         → unary ( ( "/" | "*" ) unary )* ;
     unary          → ( "!" | "-" ) unary
                    | primary ;
-    primary        → NUMBER | STRING | "true" | "false" | "nil"
-                   | "(" expression ")" ;
+
+    primary        → "true" | "false" | "nil"
+                   | NUMBER | STRING
+                   | "(" expression ")"
+                   | IDENTIFIER ;
 
 *****************************************************************/
 impl Parser {
