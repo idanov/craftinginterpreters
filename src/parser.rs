@@ -39,13 +39,15 @@ impl Parser {
         }
     }
 
-    pub fn parse(&mut self) -> Vec<Result<Stmt, String>> {
-        let mut statements: Vec<Result<Stmt, String>> = Vec::new();
+    pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
+        let mut statements: Vec<Stmt> = Vec::new();
         while !self.is_at_end() {
-            statements.push(self.statement());
+            let stmt = self.statement()?;
+            println!("Debug {:?}", stmt);
+            statements.push(stmt);
         }
 
-        return statements;
+        return Ok(statements);
     }
 
     fn statement(&mut self) -> Result<Stmt, String> {
@@ -151,17 +153,19 @@ impl Parser {
             return Ok(Expr::Grouping(Box::new(expr)));
         }
 
-        return Parser::error::<Expr>(self.peek(), "Expect expression.");
+        return Parser::error::<Expr>(self.peek(), "Expect expression.".to_string());
     }
 
     fn consume(&mut self, types: TokenType, message: &str) -> Result<Token, String> {
         if self.check(&types) {
             return Ok(self.advance());
         }
-        return Parser::error::<Token>(self.peek(), message);
+        let prev = self.previous();
+        let msg = format!("{}. Last valid lexeme was {}.", message, prev.lexeme);
+        return Parser::error::<Token>(self.peek(), msg);
     }
 
-    fn error<T>(token: Token, message: &str) -> Result<T, String> {
+    fn error<T>(token: Token, message: String) -> Result<T, String> {
         if token.token == TokenType::EOF {
             return Err(format!(
                 "[line {}:{}] Error at end: {}",
@@ -169,8 +173,8 @@ impl Parser {
             ));
         } else {
             return Err(format!(
-                "[line {}:{}] Error at {:?}: {}",
-                token.line, token.column, token, message
+                "[line {}:{}] Error at {}: {}",
+                token.line, token.column, token.lexeme, message
             ));
         }
     }

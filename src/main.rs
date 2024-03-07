@@ -64,16 +64,18 @@ fn run(source: String) {
         .cloned()
         .collect::<Vec<_>>();
     let mut parser = Parser::new(tokens);
-    let statements: Vec<Result<Stmt, String>> = parser.parse();
-    for statement in &statements {
-        match &statement {
-            Ok(x) => println!("{}", x),
-            Err(e) => eprintln!("{}", e),
+    let statements: Result<Vec<Stmt>, String> = parser.parse();
+
+    match &statements {
+        Ok(xs) => {
+            for x in xs {
+                println!("{}", x);
+            }
         }
+        Err(e) => eprintln!("{}", e),
     }
     println!("-------- Interpreter results ------");
-    let stmt_res: Result<Vec<Stmt>, String> = statements.into_iter().collect();
-    if let Err(e) = stmt_res.and_then(|x| interpreter.interpret(&x)) {
+    if let Err(e) = statements.and_then(|x| interpreter.interpret(&x)) {
         eprintln!("{}", e);
     };
 }
