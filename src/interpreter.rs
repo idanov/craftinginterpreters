@@ -19,7 +19,7 @@ impl Interpreter {
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(&lit),
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
-            Expr::Variable(_) => Err("Unimplemented yet.".to_string()),
+            Expr::Variable(name) => self.environment.get(name),
         }
     }
 
@@ -41,7 +41,15 @@ impl Interpreter {
                 println!("{}", value);
                 Ok(())
             }
-            Stmt::Var(name, val) => Err("Unimplemented yet.".to_string()),
+            Stmt::Var(name, None) => {
+                self.environment.define(name.lexeme.clone(), Lit::None);
+                Ok(())
+            }
+            Stmt::Var(name, Some(initializer)) => {
+                let value = self.evaluate(initializer)?;
+                self.environment.define(name.lexeme.clone(), value);
+                Ok(())
+            }
         }
     }
 
