@@ -1,10 +1,18 @@
+use crate::environment::Environment;
 use crate::expr::Expr;
 use crate::scanner::{Literal as Lit, Token, TokenType as TT};
 use crate::stmt::Stmt;
 
-pub struct Interpreter {}
+pub struct Interpreter {
+    environment: Environment,
+}
 
 impl Interpreter {
+    pub fn new() -> Self {
+        Interpreter {
+            environment: Environment::new(),
+        }
+    }
     pub fn evaluate(&mut self, expr: &Expr) -> Result<Lit, String> {
         match expr {
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),

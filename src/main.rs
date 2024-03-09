@@ -9,6 +9,7 @@ mod interpreter;
 mod parser;
 mod scanner;
 mod stmt;
+mod environment;
 
 use interpreter::Interpreter;
 use parser::Parser;
@@ -51,7 +52,7 @@ fn run_prompt() {
 fn run(source: String) {
     // scan tokens and print them
     let mut scan = scanner::Scanner::new(&source);
-    let mut interpreter = Interpreter {};
+    let mut interpreter = Interpreter::new();
     let raw_tokens = scan.scan_tokens();
     println!("-------- Scanner results ------");
     for token in raw_tokens {
