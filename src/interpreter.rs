@@ -15,6 +15,10 @@ impl Interpreter {
     }
     pub fn evaluate(&mut self, expr: &Expr) -> Result<Lit, String> {
         match expr {
+            Expr::Assign(name, value) => {
+                let val = self.evaluate(value)?;
+                self.environment.assign(name, val)
+            }
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(&lit),

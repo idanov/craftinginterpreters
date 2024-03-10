@@ -21,4 +21,12 @@ impl Environment {
             .cloned()
             .ok_or(format!("Undefined variable '{}'.", key.lexeme))
     }
+
+    pub fn assign(&mut self, name: &Token, val: Literal) -> Result<Literal, String> {
+        if self.values.contains_key(&name.lexeme) {
+            self.values.insert(name.lexeme.clone(), val.clone());
+            return Ok::<Literal, String>(val);
+        }
+        return Err(format!("Undefined variable '{}'.", name.lexeme));
+    }
 }
