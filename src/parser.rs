@@ -92,6 +92,9 @@ impl Parser {
         if self.munch(&[TokenType::Print]) {
             return self.print_statement();
         }
+        if self.munch(&[TokenType::LeftBrace]) {
+            return Ok(Stmt::Block(self.block()?));
+        }
 
         return self.expression_statement();
     }
@@ -106,6 +109,16 @@ impl Parser {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
         return Ok(Stmt::Expression(expr));
+    }
+
+    fn block(&mut self) -> Result<Vec<Stmt>, String> {
+        let mut statements: Vec<Stmt> = Vec::new();
+        while !self.check(TokenType::RightBrace) && !self.is_at_end() {
+            statements.push(self.declaration()?);
+        }
+
+        self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
+        return Ok(statements);
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
