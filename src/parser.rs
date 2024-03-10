@@ -21,7 +21,10 @@ Parser grammar:
     varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
     statement      → exprStmt
-                   | printStmt ;
+                   | printStmt
+                   | block ;
+
+    block          → "{" declaration* "}" ;
 
     exprStmt       → expression ";" ;
     printStmt      → "print" expression ";" ;

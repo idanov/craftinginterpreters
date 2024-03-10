@@ -36,6 +36,7 @@ impl Interpreter {
 
     fn execute(&mut self, stmt: &Stmt) -> Result<(), String> {
         match stmt {
+            Stmt::Block(_) => todo!(),
             Stmt::Expression(expr) => {
                 self.evaluate(expr)?;
                 Ok(())
