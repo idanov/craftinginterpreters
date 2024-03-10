@@ -214,7 +214,7 @@ impl Parser {
     }
 
     fn consume(&mut self, types: TokenType, message: &str) -> Result<Token, String> {
-        if self.check(&types) {
+        if self.check(types) {
             return Ok(self.advance());
         }
         let prev = self.previous();
@@ -265,7 +265,7 @@ impl Parser {
 
     fn munch(&mut self, types: &[TokenType]) -> bool {
         for token in types {
-            if self.check(&token) {
+            if self.check(*token) {
                 self.advance();
                 return true;
             }
@@ -273,11 +273,11 @@ impl Parser {
         return false;
     }
 
-    fn check(&mut self, token: &TokenType) -> bool {
+    fn check(&mut self, token: TokenType) -> bool {
         if self.is_at_end() {
             return false;
         };
-        return self.peek().token == *token;
+        return self.peek().token == token;
     }
 
     fn advance(&mut self) -> Token {
