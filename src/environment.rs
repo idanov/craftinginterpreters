@@ -1,5 +1,5 @@
 use crate::scanner::{Literal, Token};
-use std::collections::HashMap;
+use std::{collections::HashMap, mem};
 
 pub struct Environment {
     enclosing: Option<Box<Environment>>,
@@ -19,6 +19,10 @@ impl Environment {
             enclosing: Some(Box::new(enclosing)),
             values: HashMap::new(),
         }
+    }
+
+    pub fn detach(&mut self) -> Option<Box<Self>> {
+        return mem::replace(&mut self.enclosing, None);
     }
 
     pub fn define(&mut self, key: String, value: Literal) {

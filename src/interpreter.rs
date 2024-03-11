@@ -2,6 +2,7 @@ use crate::environment::Environment;
 use crate::expr::Expr;
 use crate::scanner::{Literal as Lit, Token, TokenType as TT};
 use crate::stmt::Stmt;
+use std::mem;
 
 pub struct Interpreter {
     environment: Environment,
@@ -36,7 +37,18 @@ impl Interpreter {
 
     fn execute(&mut self, stmt: &Stmt) -> Result<(), String> {
         match stmt {
-            Stmt::Block(_) => todo!(),
+            Stmt::Block(statements) => {
+                // temporarily replace it with an empty environment
+                let previous = mem::replace(&mut self.environment, Environment::new());
+                // create a new nested environment
+                self.environment = Environment::nested(previous);
+                let res = statements.iter().try_for_each(|x| self.execute(x));
+                // extract enclosing environment and move it back here
+                if let Some(env) = self.environment.detach() {
+                    self.environment = *env;
+                };
+                res
+            }
             Stmt::Expression(expr) => {
                 self.evaluate(expr)?;
                 Ok(())
