@@ -1,7 +1,5 @@
 use std::env;
 use std::fs;
-use std::io;
-use std::io::Write;
 use std::process::exit;
 
 mod environment;
@@ -13,6 +11,8 @@ mod stmt;
 
 use interpreter::Interpreter;
 use parser::Parser;
+use rustyline::DefaultEditor;
+use rustyline::error::ReadlineError;
 use stmt::Stmt;
 
 struct Lox {
@@ -36,14 +36,27 @@ impl Lox {
     }
 
     pub fn run_prompt(&mut self) {
+        let mut rl = DefaultEditor::new().expect("Something went wrong with starting rustyline");
         loop {
-            print!(">>> ");
-            io::stdout().flush().unwrap();
-            let mut contents = String::new();
-            io::stdin()
-                .read_line(&mut contents)
-                .expect("Something went wrong reading the line");
-            self.run(contents);
+            let readline = rl.readline(">>> ");
+            match readline {
+                Ok(line) => {
+                    let _ = rl.add_history_entry(line.as_str());
+                    self.run(line);
+                }
+                Err(ReadlineError::Interrupted) => {
+                    println!("^C");
+                    break
+                }
+                Err(ReadlineError::Eof) => {
+                    println!("^D");
+                    break
+                }
+                Err(err) => {
+                    eprintln!("Error: {:?}", err);
+                    break
+                }
+            }
             // had_error = false;
         }
     }
