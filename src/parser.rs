@@ -21,8 +21,12 @@ Parser grammar:
     varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
     statement      → exprStmt
+                   | ifStmt
                    | printStmt
                    | block ;
+
+    ifStmt         → "if" "(" expression ")" statement
+                   ( "else" statement )? ;
 
     block          → "{" declaration* "}" ;
 
@@ -89,6 +93,9 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt, String> {
+        if self.munch(&[TokenType::If]) {
+            return self.if_statement();
+        }
         if self.munch(&[TokenType::Print]) {
             return self.print_statement();
         }
@@ -97,6 +104,19 @@ impl Parser {
         }
 
         return self.expression_statement();
+    }
+
+    fn if_statement(&mut self) -> Result<Stmt, String> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'if'.")?;
+        let cond = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect ')' after if condition.")?;
+        let then_branch = Box::new(self.statement()?);
+        let else_branch: Option<Box<Stmt>> = if self.munch(&[TokenType::Else]) {
+            Some(Box::new(self.statement()?))
+        } else {
+            None
+        };
+        return Ok(Stmt::If(cond, then_branch, else_branch));
     }
 
     fn print_statement(&mut self) -> Result<Stmt, String> {

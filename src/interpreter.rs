@@ -53,6 +53,7 @@ impl Interpreter {
                 self.evaluate(expr)?;
                 Ok(())
             }
+            Stmt::If(cond, then_branch, else_branch) => todo!(),
             Stmt::Print(expr) => {
                 let value = self.evaluate(expr)?;
                 println!("{}", value);
