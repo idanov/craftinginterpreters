@@ -53,7 +53,16 @@ impl Interpreter {
                 self.evaluate(expr)?;
                 Ok(())
             }
-            Stmt::If(cond, then_branch, else_branch) => todo!(),
+            Stmt::If(cond, then_branch, maybe_else) => {
+                let condition = self.evaluate(cond)?;
+                if Interpreter::is_truthy(&condition) {
+                    self.execute(&then_branch)
+                } else if let Some(else_branch) = maybe_else {
+                    self.execute(&else_branch)
+                } else {
+                    Ok(())
+                }
+            }
             Stmt::Print(expr) => {
                 let value = self.evaluate(expr)?;
                 println!("{}", value);
