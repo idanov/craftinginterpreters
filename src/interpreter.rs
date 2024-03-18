@@ -23,7 +23,22 @@ impl Interpreter {
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(&lit),
-            Expr::Logical(left, op, right) => todo!(),
+            Expr::Logical(left, op, right) if op.token == TT::Or => {
+                let res = self.evaluate(left)?;
+                if Interpreter::is_truthy(&res) {
+                    Ok(res)
+                } else{
+                    self.evaluate(right)
+                }
+            },
+            Expr::Logical(left, _, right) => {
+                let res = self.evaluate(left)?;
+                if !Interpreter::is_truthy(&res) {
+                    Ok(res)
+                } else{
+                    self.evaluate(right)
+                }
+            },
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
             Expr::Variable(name) => self.environment.get(name),
         }
