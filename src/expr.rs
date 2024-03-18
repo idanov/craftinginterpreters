@@ -8,6 +8,7 @@ pub enum Expr {
     Binary(Box<Expr>, Token, Box<Expr>),
     Grouping(Box<Expr>),
     Literal(Literal),
+    Logical(Box<Expr>, Token, Box<Expr>),
     Unary(Token, Box<Expr>),
     Variable(Token),
 }
@@ -19,6 +20,7 @@ impl fmt::Display for Expr {
             Expr::Binary(left, op, right) => write!(f, "({} {} {})", op.lexeme, left, right),
             Expr::Grouping(expr) => write!(f, "(group {})", expr),
             Expr::Literal(lit) => write!(f, "{}", lit),
+            Expr::Logical(left, op, right) => write!(f, "({} {} {})", op.lexeme, left, right),
             Expr::Unary(op, expr) => write!(f, "({} {})", op.lexeme, expr),
             Expr::Variable(ident) => write!(f, "{}", ident.lexeme),
         }

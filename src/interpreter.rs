@@ -23,6 +23,7 @@ impl Interpreter {
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(&lit),
+            Expr::Logical(left, op, right) => todo!(),
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
             Expr::Variable(name) => self.environment.get(name),
         }

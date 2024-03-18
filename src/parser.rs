@@ -35,7 +35,9 @@ Parser grammar:
 
     expression     → assignment ;
     assignment     → IDENTIFIER "=" assignment
-                   | equality ;
+                   | logic_or ;
+    logic_or       → logic_and ( "or" logic_and )* ;
+    logic_and      → equality ( "and" equality )* ;
     equality       → comparison ( ( "!=" | "==" ) comparison )* ;
     comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     term           → factor ( ( "-" | "+" ) factor )* ;
@@ -146,7 +148,7 @@ impl Parser {
     }
 
     fn assignment(&mut self) -> Result<Expr, String> {
-        let expr = self.equality()?;
+        let expr = self.or()?;
         if self.munch(&[TokenType::Equal]) {
             let equals = self.previous();
             let value = self.assignment()?;
@@ -156,6 +158,27 @@ impl Parser {
             }
 
             return Parser::error::<Expr>(equals, "Invalid assignment target.".to_string());
+        }
+        return Ok(expr);
+    }
+
+    fn or(&mut self) -> Result<Expr, String> {
+        let mut expr: Expr = self.and()?;
+        while self.munch(&[TokenType::Or]) {
+            let operator = self.previous();
+            let right = self.and()?;
+            expr = Expr::Logical(Box::new(expr), operator, Box::new(right));
+        }
+        return Ok(expr);
+    }
+
+
+    fn and(&mut self) -> Result<Expr, String> {
+        let mut expr: Expr = self.equality()?;
+        while self.munch(&[TokenType::And]) {
+            let operator = self.previous();
+            let right = self.equality()?;
+            expr = Expr::Logical(Box::new(expr), operator, Box::new(right));
         }
         return Ok(expr);
     }
