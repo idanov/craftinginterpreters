@@ -70,8 +70,7 @@ impl Interpreter {
                 Ok(())
             }
             Stmt::If(cond, then_branch, maybe_else) => {
-                let condition = self.evaluate(cond)?;
-                if Interpreter::is_truthy(&condition) {
+                if Interpreter::is_truthy(&(self.evaluate(cond)?)) {
                     self.execute(&then_branch)
                 } else if let Some(else_branch) = maybe_else {
                     self.execute(&else_branch)
@@ -82,6 +81,12 @@ impl Interpreter {
             Stmt::Print(expr) => {
                 let value = self.evaluate(expr)?;
                 println!("{}", value);
+                Ok(())
+            }
+            Stmt::While(cond, body) => {
+                while Interpreter::is_truthy(&(self.evaluate(cond)?)) {
+                    self.execute(&body)?;
+                }
                 Ok(())
             }
             Stmt::Var(name, None) => {

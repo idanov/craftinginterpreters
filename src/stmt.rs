@@ -8,6 +8,7 @@ pub enum Stmt {
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     Print(Expr),
     Var(Token, Option<Expr>),
+    While(Expr, Box<Stmt>),
 }
 
 impl fmt::Display for Stmt {
@@ -27,6 +28,7 @@ impl fmt::Display for Stmt {
             Stmt::Print(expr) => write!(f, "(print {})", expr),
             Stmt::Var(token, Some(expr)) => write!(f, "(var {} {})", token.lexeme, expr),
             Stmt::Var(token, None) => write!(f, "(var {} nil)", token.lexeme),
+            Stmt::While(cond, body) => write!(f, "(while {} (body {}))", cond, body),
         }
     }
 }

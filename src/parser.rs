@@ -23,7 +23,10 @@ Parser grammar:
     statement      → exprStmt
                    | ifStmt
                    | printStmt
+                   | whileStmt
                    | block ;
+
+    whileStmt      → "while" "(" expression ")" statement ;
 
     ifStmt         → "if" "(" expression ")" statement
                    ( "else" statement )? ;
@@ -90,7 +93,10 @@ impl Parser {
             None
         };
 
-        self.consume(TokenType::Semicolon, "Expect ';' after variable declaration.")?;
+        self.consume(
+            TokenType::Semicolon,
+            "Expect ';' after variable declaration.",
+        )?;
         return Ok(Stmt::Var(name, initializer));
     }
 
@@ -100,6 +106,9 @@ impl Parser {
         }
         if self.munch(&[TokenType::Print]) {
             return self.print_statement();
+        }
+        if self.munch(&[TokenType::While]) {
+            return self.while_statement();
         }
         if self.munch(&[TokenType::LeftBrace]) {
             return Ok(Stmt::Block(self.block()?));
@@ -125,6 +134,15 @@ impl Parser {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         return Ok(Stmt::Print(value));
+    }
+
+    fn while_statement(&mut self) -> Result<Stmt, String> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'while'.")?;
+        let cond = self.expression()?;
+        self.consume(TokenType::RightParen, "Expect ')' after condition.")?;
+        let body = self.statement()?;
+
+        return Ok(Stmt::While(cond, Box::new(body)));
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, String> {
@@ -171,7 +189,6 @@ impl Parser {
         }
         return Ok(expr);
     }
-
 
     fn and(&mut self) -> Result<Expr, String> {
         let mut expr: Expr = self.equality()?;
@@ -362,5 +379,4 @@ impl Parser {
             .expect("No previous token to be processed")
             .clone();
     }
-
 }
