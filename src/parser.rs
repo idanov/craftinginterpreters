@@ -21,10 +21,15 @@ Parser grammar:
     varDecl        → "var" IDENTIFIER ( "=" expression )? ";" ;
 
     statement      → exprStmt
+                   | forStmt
                    | ifStmt
                    | printStmt
                    | whileStmt
                    | block ;
+
+    forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
+                   expression? ";"
+                   expression? ")" statement ;
 
     whileStmt      → "while" "(" expression ")" statement ;
 
@@ -101,6 +106,9 @@ impl Parser {
     }
 
     fn statement(&mut self) -> Result<Stmt, String> {
+        if self.munch(&[TokenType::For]) {
+            return self.for_statement();
+        }
         if self.munch(&[TokenType::If]) {
             return self.if_statement();
         }
@@ -115,6 +123,45 @@ impl Parser {
         }
 
         return self.expression_statement();
+    }
+
+    fn for_statement(&mut self) -> Result<Stmt, String> {
+        self.consume(TokenType::LeftParen, "Expect '(' after 'for'.")?;
+
+        let initializer = if self.munch(&[TokenType::Semicolon]) {
+            None
+        } else if self.munch(&[TokenType::Var]) {
+            Some(self.var_declaration()?)
+        } else {
+            Some(self.expression_statement()?)
+        };
+
+        let cond = if !self.check(TokenType::Semicolon) {
+            self.expression()?
+        } else {
+            Expr::Literal(Literal::Boolean(true))
+        };
+        self.consume(TokenType::Semicolon, "Expect ';' after loop condition.")?;
+
+        let increment = if !self.check(TokenType::RightParen) {
+            Some(self.expression()?)
+        } else {
+            None
+        };
+        self.consume(TokenType::RightParen, "Expect ')' after for clauses.")?;
+
+        let mut body = self.statement()?;
+
+        // Desugaring a for loop into a while loop
+        if let Some(inc) = increment {
+            body = Stmt::Block(vec![body, Stmt::Expression(inc)])
+        }
+        body = Stmt::While(cond, Box::new(body));
+        if let Some(init) = initializer {
+            body = Stmt::Block(vec![init, body])
+        }
+
+        return Ok(body);
     }
 
     fn if_statement(&mut self) -> Result<Stmt, String> {
