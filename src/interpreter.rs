@@ -21,6 +21,7 @@ impl Interpreter {
                 self.environment.assign(name, val)
             }
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
+            Expr::Call(_, _, _) => todo!(),
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(&lit),
             Expr::Logical(left, op, right) if op.token == TT::Or => {

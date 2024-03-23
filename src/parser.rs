@@ -50,8 +50,9 @@ Parser grammar:
     comparison     → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
     term           → factor ( ( "-" | "+" ) factor )* ;
     factor         → unary ( ( "/" | "*" ) unary )* ;
-    unary          → ( "!" | "-" ) unary
-                   | primary ;
+    unary          → ( "!" | "-" ) unary | call ;
+    call           → primary ( "(" arguments? ")" )* ;
+    arguments      → expression ( "," expression )* ;
 
     primary        → "true" | "false" | "nil"
                    | NUMBER | STRING
@@ -302,7 +303,43 @@ impl Parser {
             let right: Expr = self.unary()?;
             return Ok(Expr::Unary(operator, Box::new(right)));
         }
-        return self.primary();
+        return self.call_expr();
+    }
+
+    fn call_expr(&mut self) -> Result<Expr, String> {
+        let mut expr: Expr = self.primary()?;
+
+        loop {
+            if self.munch(&[TokenType::LeftParen]) {
+                expr = self.finish_call(expr)?;
+            } else {
+                break;
+            }
+        }
+
+        return Ok(expr);
+    }
+
+    fn finish_call(&mut self, callee: Expr) -> Result<Expr, String> {
+        let mut arguments: Vec<Expr> = Vec::new();
+        if !self.check(TokenType::RightParen) {
+            loop {
+                if arguments.len() >= 255 {
+                    return Parser::error::<Expr>(
+                        self.peek(),
+                        "Can't have more than 255 arguments.".to_string(),
+                    )
+                }
+                arguments.push(self.expression()?);
+                if !self.munch(&[TokenType::Comma]) {
+                    break;
+                }
+            }
+        };
+
+        let paren: Token = self.consume(TokenType::RightParen, "Expect ')' after arguments.")?;
+
+        return Ok(Expr::Call(Box::new(callee), paren, arguments));
     }
 
     fn primary(&mut self) -> Result<Expr, String> {
