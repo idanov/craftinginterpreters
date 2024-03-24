@@ -21,25 +21,25 @@ impl Interpreter {
                 self.environment.assign(name, val)
             }
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
-            Expr::Call(_, _, _) => todo!(),
+            Expr::Call(callee, paren, arguments) => self.eval_call(callee, &paren, &arguments),
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(&lit),
             Expr::Logical(left, op, right) if op.token == TT::Or => {
                 let res = self.evaluate(left)?;
                 if Interpreter::is_truthy(&res) {
                     Ok(res)
-                } else{
+                } else {
                     self.evaluate(right)
                 }
-            },
+            }
             Expr::Logical(left, _, right) => {
                 let res = self.evaluate(left)?;
                 if !Interpreter::is_truthy(&res) {
                     Ok(res)
-                } else{
+                } else {
                     self.evaluate(right)
                 }
-            },
+            }
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
             Expr::Variable(name) => self.environment.get(name),
         }
@@ -153,6 +153,40 @@ impl Interpreter {
             (_, TT::BangEqual, _) => Ok(Lit::Boolean(!Interpreter::is_equal(&lval, &rval))),
             _ => Ok(Lit::None),
         }
+    }
+
+    fn eval_call(
+        &mut self,
+        callee: &Expr,
+        paren: &Token,
+        arguments: &Vec<Expr>,
+    ) -> Result<Lit, String> {
+        let callable: Lit = self.evaluate(callee)?;
+
+        let mut args: Vec<Lit> = Vec::new();
+        for arg in arguments {
+            let res = self.evaluate(&arg)?;
+            args.push(res);
+        }
+
+        return if let Lit::Callable(func) = callable {
+            if args.len() != func.arity() {
+                return Err(format!(
+                    "[line {}:{}] Expected {} arguments but got {}.",
+                    paren.line,
+                    paren.column,
+                    func.arity(),
+                    args.len()
+                ));
+            }
+
+            func.call(self, args)
+        } else {
+            Err(format!(
+                "[line {}:{}] Can only call functions and classes.",
+                paren.line, paren.column
+            ))
+        };
     }
 
     fn eval_grouping(&mut self, expr: &Expr) -> Result<Lit, String> {

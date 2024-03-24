@@ -5,6 +5,8 @@ use std::collections::HashMap;
 use std::fmt;
 use std::str::Chars;
 
+use crate::lox_callable::LoxCallable;
+
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TokenType {
     // Single-character tokens.
@@ -61,6 +63,7 @@ pub enum Literal {
     Double(f64),
     String(String),
     Boolean(bool),
+    Callable(LoxCallable),
     None,
 }
 
@@ -71,6 +74,7 @@ impl fmt::Display for Literal {
             Literal::Double(num) => write!(f, "{}", num),
             Literal::String(s) => write!(f, "\"{}\"", s),
             Literal::Boolean(b) => write!(f, "{}", b),
+            Literal::Callable(lox) => write!(f, "{}", lox),
             Literal::None => write!(f, "nil"),
         }
     }

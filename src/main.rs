@@ -8,6 +8,7 @@ mod interpreter;
 mod parser;
 mod scanner;
 mod stmt;
+mod lox_callable;
 
 use interpreter::Interpreter;
 use parser::Parser;
