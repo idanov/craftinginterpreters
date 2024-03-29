@@ -1,24 +1,47 @@
 use crate::environment::Environment;
 use crate::expr::Expr;
+use crate::lox_callable::LoxCallable;
 use crate::scanner::{Literal as Lit, Token, TokenType as TT};
 use crate::stmt::Stmt;
-use std::mem;
+use std::cell::RefCell;
+use std::rc::Rc;
+use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Interpreter {
-    environment: Environment,
+    globals: Rc<RefCell<Environment>>,
+    environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
+        let globals = Rc::new(RefCell::new(Environment::new()));
+        let environment = globals.clone();
+
+        globals.borrow_mut().define(
+            "clock".to_string(),
+            Lit::Callable(LoxCallable {
+                name: "clock".to_string(),
+                arity: 0,
+                callable: |_, _| {
+                    let duration = SystemTime::now()
+                        .duration_since(UNIX_EPOCH)
+                        .expect("Time went backwards");
+
+                    Ok(Lit::Double((duration.as_millis() as f64) / 1000.0))
+                },
+            }),
+        );
+
         Interpreter {
-            environment: Environment::new(),
+            globals,
+            environment,
         }
     }
     pub fn evaluate(&mut self, expr: &Expr) -> Result<Lit, String> {
         match expr {
             Expr::Assign(name, value) => {
                 let val = self.evaluate(value)?;
-                self.environment.assign(name, val)
+                self.environment.borrow_mut().assign(name, val)
             }
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
             Expr::Call(callee, paren, arguments) => self.eval_call(callee, &paren, &arguments),
@@ -41,7 +64,7 @@ impl Interpreter {
                 }
             }
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
-            Expr::Variable(name) => self.environment.get(name),
+            Expr::Variable(name) => self.environment.borrow().get(name),
         }
     }
 
@@ -56,14 +79,14 @@ impl Interpreter {
         match stmt {
             Stmt::Block(statements) => {
                 // temporarily replace it with an empty environment
-                let previous = mem::replace(&mut self.environment, Environment::new());
+                let previous = self.environment.clone();
+                let env = Environment::nested(previous.clone());
                 // create a new nested environment
-                self.environment = Environment::nested(previous);
+                self.environment = Rc::new(RefCell::new(env));
                 let res = statements.iter().try_for_each(|x| self.execute(x));
                 // extract enclosing environment and move it back here
-                if let Some(env) = self.environment.detach() {
-                    self.environment = *env;
-                };
+
+                self.environment = previous;
                 res
             }
             Stmt::Expression(expr) => {
@@ -91,12 +114,16 @@ impl Interpreter {
                 Ok(())
             }
             Stmt::Var(name, None) => {
-                self.environment.define(name.lexeme.clone(), Lit::None);
+                self.environment
+                    .borrow_mut()
+                    .define(name.lexeme.clone(), Lit::None);
                 Ok(())
             }
             Stmt::Var(name, Some(initializer)) => {
                 let value = self.evaluate(initializer)?;
-                self.environment.define(name.lexeme.clone(), value);
+                self.environment
+                    .borrow_mut()
+                    .define(name.lexeme.clone(), value);
                 Ok(())
             }
         }
