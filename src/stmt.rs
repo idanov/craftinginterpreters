@@ -1,4 +1,5 @@
 use crate::{expr::Expr, scanner::Token};
+use crate::expr::vec_to_string;
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -14,14 +15,7 @@ pub enum Stmt {
 impl fmt::Display for Stmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Stmt::Block(statements) => {
-                write!(f, "(block")?;
-                for stmt in statements {
-                    write!(f, " {}", stmt)?;
-                }
-                write!(f, ")")?;
-                Ok(())
-            },
+            Stmt::Block(statements) => write!(f, "(block {})", vec_to_string(&statements)),
             Stmt::Expression(expr) => write!(f, "{}", expr),
             Stmt::If(cond, then_branch, Some(else_branch)) => write!(f, "(if {} (then {}) (else {}))", cond, then_branch, else_branch),
             Stmt::If(cond, then_branch, None) => write!(f, "(if {} (then {}))", cond, then_branch),
