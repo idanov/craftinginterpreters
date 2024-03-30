@@ -89,11 +89,49 @@ impl Parser {
     }
 
     fn declaration(&mut self) -> Result<Stmt, String> {
+        if self.munch(&[TokenType::Fun]) {
+            return self.function("function");
+        }
         if self.munch(&[TokenType::Var]) {
             return self.var_declaration();
-        } else {
-            return self.statement();
         }
+        return self.statement();
+    }
+
+    fn function(&mut self, kind: &str) -> Result<Stmt, String> {
+        let name = self.consume(
+            TokenType::Identifier,
+            format!("Expect {} name.", kind).as_str(),
+        )?;
+        self.consume(
+            TokenType::LeftParen,
+            format!("Expect '(' after {} name.", kind).as_str(),
+        )?;
+
+        let mut parameters = Vec::new();
+        loop {
+            if parameters.len() >= 255 {
+                return Parser::error::<Stmt>(
+                    self.peek(),
+                    "Can't have more than 255 parameters.".to_string(),
+                );
+            }
+            let param = self.consume(TokenType::Identifier, "Expect parameter name.")?;
+            parameters.push(param);
+            if !self.munch(&[TokenType::Comma]) {
+                break;
+            }
+        }
+
+        self.consume(TokenType::RightParen, "Expect ')' after parameters.")?;
+
+        self.consume(
+            TokenType::LeftBrace,
+            format!("Expect '{{' before {} body.", kind).as_str(),
+        )?;
+
+        let body = self.block()?;
+        return Ok(Stmt::Function(name, parameters, body));
     }
 
     fn var_declaration(&mut self) -> Result<Stmt, String> {
@@ -333,7 +371,7 @@ impl Parser {
                     return Parser::error::<Expr>(
                         self.peek(),
                         "Can't have more than 255 arguments.".to_string(),
-                    )
+                    );
                 }
                 arguments.push(self.expression()?);
                 if !self.munch(&[TokenType::Comma]) {

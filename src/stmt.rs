@@ -6,7 +6,7 @@ use std::fmt;
 pub enum Stmt {
     Block(Vec<Stmt>),
     Expression(Expr),
-    Function(Token, Vec<Token>, Vec<Box<Stmt>>),
+    Function(Token, Vec<Token>, Vec<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
     Print(Expr),
     Var(Token, Option<Expr>),
