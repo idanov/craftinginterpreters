@@ -93,6 +93,7 @@ impl Interpreter {
                 self.evaluate(expr)?;
                 Ok(())
             }
+            Stmt::Function(_, _, _) => todo!(),
             Stmt::If(cond, then_branch, maybe_else) => {
                 if Interpreter::is_truthy(&(self.evaluate(cond)?)) {
                     self.execute(&then_branch)

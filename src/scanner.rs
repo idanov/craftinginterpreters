@@ -89,6 +89,12 @@ pub struct Token {
     pub column: usize,
 }
 
+impl fmt::Display for Token {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self.lexeme)
+    }
+}
+
 pub struct Scanner<'a> {
     chars: PeekNth<Chars<'a>>,
     tokens: Vec<Result<Token, String>>,
