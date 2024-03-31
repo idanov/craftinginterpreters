@@ -96,7 +96,13 @@ impl Interpreter {
                 self.evaluate(expr)?;
                 Ok(())
             }
-            Stmt::Function(_, _, _) => todo!(),
+            Stmt::Function(name, params, body) => {
+                self.environment.borrow_mut().define(
+                    name.lexeme.clone(),
+                    Lit::Callable(Box::new(LoxCallable::LoxFunction(name.clone(), params.to_vec(), body.to_vec()))),
+                );
+                Ok(())
+            }
             Stmt::If(cond, then_branch, maybe_else) => {
                 if Interpreter::is_truthy(&(self.evaluate(cond)?)) {
                     self.execute(&then_branch)
