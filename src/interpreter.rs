@@ -8,7 +8,7 @@ use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Interpreter {
-    globals: Rc<RefCell<Environment>>,
+    pub globals: Rc<RefCell<Environment>>,
     environment: Rc<RefCell<Environment>>,
 }
 
@@ -19,7 +19,7 @@ impl Interpreter {
 
         globals.borrow_mut().define(
             "clock".to_string(),
-            Lit::Callable(LoxCallable {
+            Lit::Callable(Box::new(LoxCallable::NativeFunction {
                 name: "clock".to_string(),
                 arity: 0,
                 callable: |_, _| {
@@ -29,7 +29,7 @@ impl Interpreter {
 
                     Ok(Lit::Double((duration.as_millis() as f64) / 1000.0))
                 },
-            }),
+            })),
         );
 
         Interpreter {
@@ -75,19 +75,22 @@ impl Interpreter {
         return Ok(());
     }
 
-    fn execute(&mut self, stmt: &Stmt) -> Result<(), String> {
+    pub fn execute_block(
+        &mut self,
+        statements: &[Stmt],
+        environment: Rc<RefCell<Environment>>,
+    ) -> Result<(), String> {
+        let previous = self.environment.clone();
+        self.environment = environment;
+        let res = statements.iter().try_for_each(|x| self.execute(x));
+        self.environment = previous;
+        res
+    }
+
+    pub fn execute(&mut self, stmt: &Stmt) -> Result<(), String> {
         match stmt {
             Stmt::Block(statements) => {
-                // temporarily replace it with an empty environment
-                let previous = self.environment.clone();
-                let env = Environment::nested(previous.clone());
-                // create a new nested environment
-                self.environment = Rc::new(RefCell::new(env));
-                let res = statements.iter().try_for_each(|x| self.execute(x));
-                // extract enclosing environment and move it back here
-
-                self.environment = previous;
-                res
+                self.execute_block(statements, Environment::nested(self.environment.clone()))
             }
             Stmt::Expression(expr) => {
                 self.evaluate(expr)?;
@@ -208,7 +211,7 @@ impl Interpreter {
                 ));
             }
 
-            func.call(self, args)
+            func.call(self, &args)
         } else {
             Err(format!(
                 "[line {}:{}] Can only call functions and classes.",

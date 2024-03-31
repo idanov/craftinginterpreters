@@ -63,7 +63,7 @@ pub enum Literal {
     Double(f64),
     String(String),
     Boolean(bool),
-    Callable(LoxCallable),
+    Callable(Box<LoxCallable>),
     None,
 }
 

@@ -14,11 +14,11 @@ impl Environment {
         }
     }
 
-    pub fn nested(enclosing: Rc<RefCell<Environment>>) -> Self {
-        Environment {
+    pub fn nested(enclosing: Rc<RefCell<Self>>) -> Rc<RefCell<Self>> {
+        Rc::new(RefCell::new(Environment {
             enclosing: Some(enclosing),
             values: HashMap::new(),
-        }
+        }))
     }
 
     pub fn define(&mut self, key: String, value: Literal) {
@@ -30,7 +30,11 @@ impl Environment {
             .values
             .get(&key.lexeme)
             .cloned()
-            .or_else(|| self.enclosing.as_ref().and_then(|x| x.borrow().get(&key).ok()))
+            .or_else(|| {
+                self.enclosing
+                    .as_ref()
+                    .and_then(|x| x.borrow().get(&key).ok())
+            })
             .ok_or(format!("Undefined variable '{}'.", key.lexeme));
     }
 
