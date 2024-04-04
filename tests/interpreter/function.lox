@@ -1,6 +1,38 @@
+fun add(a, b, c) {
+  print a + b + c;
+}
+
+// add(1, 2, 3, 4); // Too many.
+// add(1, 2);       // Too few.
+
+fun count(n) {
+  if (n > 1) count(n - 1);
+  print n;
+}
+
+count(3);
+
+fun add(a, b, c) {
+  print a + b + c;
+}
+
+add(1, 2, 3);
+
 fun add(a, b) {
   print a + b;
 }
 
 print add; // "<fn add>".
 add(2, 5);
+
+fun hello() {
+  print "hello";
+}
+
+hello();
+
+fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
+}
+
+sayHi("Dear", "Reader");
