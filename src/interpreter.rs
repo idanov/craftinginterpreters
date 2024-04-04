@@ -117,6 +117,7 @@ impl Interpreter {
                 println!("{}", value);
                 Ok(())
             }
+            Stmt::Return(_, _) => todo!(),
             Stmt::While(cond, body) => {
                 while Interpreter::is_truthy(&(self.evaluate(cond)?)) {
                     self.execute(&body)?;

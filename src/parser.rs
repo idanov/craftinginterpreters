@@ -29,8 +29,11 @@ Parser grammar:
                    | forStmt
                    | ifStmt
                    | printStmt
+                   | returnStmt
                    | whileStmt
                    | block ;
+
+    returnStmt     → "return" expression? ";" ;
 
     forStmt        → "for" "(" ( varDecl | exprStmt | ";" )
                    expression? ";"
@@ -161,6 +164,9 @@ impl Parser {
         if self.munch(&[TokenType::Print]) {
             return self.print_statement();
         }
+        if self.munch(&[TokenType::Return]) {
+            return self.return_statement();
+        }
         if self.munch(&[TokenType::While]) {
             return self.while_statement();
         }
@@ -227,6 +233,16 @@ impl Parser {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
         return Ok(Stmt::Print(value));
+    }
+
+    fn return_statement(&mut self) -> Result<Stmt, String> {
+        let keyword = self.previous();
+        let mut value = Expr::Literal(Literal::None);
+        if !self.check(TokenType::Semicolon) {
+        value = self.expression()?;
+        }
+        self.consume(TokenType::Semicolon, "Expect ';' after return value.")?;
+        return Ok(Stmt::Return(keyword, value));
     }
 
     fn while_statement(&mut self) -> Result<Stmt, String> {
