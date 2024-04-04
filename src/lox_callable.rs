@@ -7,7 +7,7 @@ use crate::{
     stmt::Stmt,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum LoxCallable {
     NativeFunction {
         name: String,

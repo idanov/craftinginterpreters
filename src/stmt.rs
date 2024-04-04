@@ -2,7 +2,7 @@ use crate::{expr::Expr, scanner::Token};
 use crate::expr::vec_to_string;
 use std::fmt;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Block(Vec<Stmt>),
     Expression(Expr),
