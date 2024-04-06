@@ -83,9 +83,10 @@ impl Interpreter {
         let previous = self.environment.clone();
         self.environment = environment;
         let mut res: Result<Option<Lit>, String> = Ok(None);
+        // this can be replaced in the future with iter().try_find() when added to Rust
         for stmt in statements {
             res = self.execute(stmt);
-            if res.is_err() {
+            if res.is_err() || res.as_ref().is_ok_and(|x| x.is_some()) {
                 break;
             };
         };
@@ -123,12 +124,16 @@ impl Interpreter {
                 println!("{}", value);
                 Ok(None)
             }
-            Stmt::Return(_, _) => todo!(),
+            Stmt::Return(_, value) => Ok(Some(self.evaluate(value)?)),
             Stmt::While(cond, body) => {
+                let mut res: Option<Lit> = None;
                 while Interpreter::is_truthy(&(self.evaluate(cond)?)) {
-                    self.execute(&body)?;
+                    res = self.execute(&body)?;
+                    if res.is_some() {
+                        break;
+                    }
                 }
-                Ok(None)
+                Ok(res)
             }
             Stmt::Var(name, None) => {
                 self.environment

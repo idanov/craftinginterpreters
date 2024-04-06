@@ -45,8 +45,8 @@ impl LoxCallable {
                 for (param, arg) in it {
                     environment.borrow_mut().define(param.lexeme.clone(), arg.clone());
                 }
-                interpreter.execute_block(body, environment)?;
-                Ok(Literal::None)
+                let res: Option<Literal> = interpreter.execute_block(body, environment)?;
+                Ok(res.unwrap_or(Literal::None))
             }
         }
     }
