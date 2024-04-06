@@ -68,40 +68,46 @@ impl Interpreter {
         }
     }
 
-    pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<(), String> {
+    pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<Option<Lit>, String> {
         for statement in statements {
             self.execute(statement)?;
         }
-        return Ok(());
+        return Ok(None);
     }
 
     pub fn execute_block(
         &mut self,
         statements: &[Stmt],
         environment: Rc<RefCell<Environment>>,
-    ) -> Result<(), String> {
+    ) -> Result<Option<Lit>, String> {
         let previous = self.environment.clone();
         self.environment = environment;
-        let res = statements.iter().try_for_each(|x| self.execute(x));
+        let mut res: Result<Option<Lit>, String> = Ok(None);
+        for stmt in statements {
+            res = self.execute(stmt);
+            if res.is_err() {
+                break;
+            };
+        };
         self.environment = previous;
         res
     }
 
-    pub fn execute(&mut self, stmt: &Stmt) -> Result<(), String> {
+    pub fn execute(&mut self, stmt: &Stmt) -> Result<Option<Lit>, String> {
         match stmt {
             Stmt::Block(statements) => {
                 self.execute_block(statements, Environment::nested(self.environment.clone()))
             }
             Stmt::Expression(expr) => {
                 self.evaluate(expr)?;
-                Ok(())
+                Ok(None)
             }
             Stmt::Function(name, params, body) => {
                 self.environment.borrow_mut().define(
                     name.lexeme.clone(),
                     Lit::Callable(Box::new(LoxCallable::LoxFunction(name.clone(), params.to_vec(), body.to_vec()))),
                 );
-                Ok(())
+                Ok(None)
             }
             Stmt::If(cond, then_branch, maybe_else) => {
                 if Interpreter::is_truthy(&(self.evaluate(cond)?)) {
@@ -109,33 +115,33 @@ impl Interpreter {
                 } else if let Some(else_branch) = maybe_else {
                     self.execute(&else_branch)
                 } else {
-                    Ok(())
+                    Ok(None)
                 }
             }
             Stmt::Print(expr) => {
                 let value = self.evaluate(expr)?;
                 println!("{}", value);
-                Ok(())
+                Ok(None)
             }
             Stmt::Return(_, _) => todo!(),
             Stmt::While(cond, body) => {
                 while Interpreter::is_truthy(&(self.evaluate(cond)?)) {
                     self.execute(&body)?;
                 }
-                Ok(())
+                Ok(None)
             }
             Stmt::Var(name, None) => {
                 self.environment
                     .borrow_mut()
                     .define(name.lexeme.clone(), Lit::None);
-                Ok(())
+                Ok(None)
             }
             Stmt::Var(name, Some(initializer)) => {
                 let value = self.evaluate(initializer)?;
                 self.environment
                     .borrow_mut()
                     .define(name.lexeme.clone(), value);
-                Ok(())
+                Ok(None)
             }
         }
     }
