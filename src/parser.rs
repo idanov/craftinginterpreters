@@ -1,6 +1,7 @@
 use crate::expr::Expr;
 use crate::scanner::{Literal, Token, TokenType};
 use crate::stmt::Stmt;
+use colored::Colorize;
 use itertools::peek_nth;
 use itertools::structs::PeekNth;
 use std::vec::IntoIter;
@@ -80,7 +81,7 @@ impl Parser {
         let mut statements: Vec<Stmt> = Vec::new();
         while !self.is_at_end() {
             let stmt = self.declaration();
-            println!("Debug {:?}", stmt);
+            println!("{}", format!("Debug {:?}", stmt).dimmed());
             if let Ok(x) = stmt {
                 statements.push(x);
             } else {
@@ -239,7 +240,7 @@ impl Parser {
         let keyword = self.previous();
         let mut value = Expr::Literal(Literal::None);
         if !self.check(TokenType::Semicolon) {
-        value = self.expression()?;
+            value = self.expression()?;
         }
         self.consume(TokenType::Semicolon, "Expect ';' after return value.")?;
         return Ok(Stmt::Return(keyword, value));

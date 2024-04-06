@@ -16,6 +16,8 @@ use rustyline::DefaultEditor;
 use rustyline::error::ReadlineError;
 use stmt::Stmt;
 
+use colored::Colorize;
+
 struct Lox {
     interpreter: Interpreter,
 }
@@ -54,7 +56,7 @@ impl Lox {
                     break
                 }
                 Err(err) => {
-                    eprintln!("Error: {:?}", err);
+                    eprintln!("{}", format!( "Error: {:?}", err ).red());
                     break
                 }
             }
@@ -85,11 +87,11 @@ impl Lox {
                     println!("{}", x);
                 }
             }
-            Err(e) => eprintln!("{}", e),
+            Err(e) => eprintln!("{}", e.red()),
         }
         println!("-------- Interpreter results ------");
         if let Err(e) = statements.and_then(|x| self.interpreter.interpret(&x)) {
-            eprintln!("{}", e);
+            eprintln!("{}", e.red());
         };
     }
 
