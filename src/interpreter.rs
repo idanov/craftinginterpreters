@@ -89,7 +89,7 @@ impl Interpreter {
             if res.is_err() || res.as_ref().is_ok_and(|x| x.is_some()) {
                 break;
             };
-        };
+        }
         self.environment = previous;
         res
     }
@@ -106,7 +106,12 @@ impl Interpreter {
             Stmt::Function(name, params, body) => {
                 self.environment.borrow_mut().define(
                     name.lexeme.clone(),
-                    Lit::Callable(Box::new(LoxCallable::LoxFunction(name.clone(), params.to_vec(), body.to_vec()))),
+                    Lit::Callable(Box::new(LoxCallable::LoxFunction {
+                        name: name.clone(),
+                        params: params.to_vec(),
+                        body: body.to_vec(),
+                        closure: self.environment.clone(),
+                    })),
                 );
                 Ok(None)
             }

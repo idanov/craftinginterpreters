@@ -1,4 +1,4 @@
-use std::fmt::Display;
+use std::{cell::RefCell, fmt::Display, rc::Rc};
 
 use crate::{
     environment::Environment,
@@ -14,7 +14,12 @@ pub enum LoxCallable {
         arity: usize,
         callable: fn(&mut Interpreter, &[Literal]) -> Result<Literal, String>,
     },
-    LoxFunction(Token, Vec<Token>, Vec<Stmt>),
+    LoxFunction {
+        name: Token,
+        params: Vec<Token>,
+        body: Vec<Stmt>,
+        closure: Rc<RefCell<Environment>>,
+    },
 }
 
 impl LoxCallable {
@@ -25,7 +30,12 @@ impl LoxCallable {
                 arity,
                 callable: _,
             } => *arity,
-            Self::LoxFunction(_, params, _) => params.len(),
+            Self::LoxFunction {
+                name: _,
+                params,
+                body: _,
+                closure: _,
+            } => params.len(),
         }
     }
     pub fn call(
@@ -39,11 +49,18 @@ impl LoxCallable {
                 arity: _,
                 callable,
             } => (callable)(interpreter, arguments),
-            Self::LoxFunction(_, params, body) => {
-                let environment = Environment::nested(interpreter.globals.clone());
+            Self::LoxFunction {
+                name: _,
+                params,
+                body,
+                closure,
+            } => {
+                let environment = Environment::nested(closure.clone());
                 let it = params.iter().zip(arguments.iter());
                 for (param, arg) in it {
-                    environment.borrow_mut().define(param.lexeme.clone(), arg.clone());
+                    environment
+                        .borrow_mut()
+                        .define(param.lexeme.clone(), arg.clone());
                 }
                 let res: Option<Literal> = interpreter.execute_block(body, environment)?;
                 Ok(res.unwrap_or(Literal::None))
@@ -60,7 +77,12 @@ impl Display for LoxCallable {
                 arity: _,
                 callable: _,
             } => write!(f, "<native fn {}>", name),
-            Self::LoxFunction(name, _, _) => write!(f, "<fn {}>", name.lexeme),
+            Self::LoxFunction {
+                name,
+                params: _,
+                body: _,
+                closure: _,
+            } => write!(f, "<fn {}>", name.lexeme),
         }
     }
 }

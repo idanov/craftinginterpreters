@@ -1,6 +1,7 @@
 use crate::scanner::{Literal, Token};
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
+#[derive(Debug, PartialEq)]
 pub struct Environment {
     enclosing: Option<Rc<RefCell<Environment>>>,
     values: HashMap<String, Literal>,
