@@ -441,7 +441,7 @@ impl Parser {
         return Parser::error::<Token>(self.peek(), msg);
     }
 
-    fn error<T>(token: Token, message: String) -> Result<T, String> {
+    pub fn error<T>(token: Token, message: String) -> Result<T, String> {
         if token.token == TokenType::EOF {
             return Err(format!(
                 "[line {}:{}] Error at end: {}",

@@ -9,6 +9,7 @@ mod parser;
 mod scanner;
 mod stmt;
 mod lox_callable;
+mod resolver;
 
 use interpreter::Interpreter;
 use parser::Parser;
