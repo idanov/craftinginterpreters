@@ -37,6 +37,7 @@ impl Interpreter {
             environment,
         }
     }
+
     pub fn evaluate(&mut self, expr: &Expr) -> Result<Lit, String> {
         match expr {
             Expr::Assign(name, value) => {
@@ -66,6 +67,10 @@ impl Interpreter {
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
             Expr::Variable(name) => self.environment.borrow().get(name),
         }
+    }
+
+    pub fn resolve(&mut self, expr: &Expr, level: usize) {
+        todo!()
     }
 
     pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<Option<Lit>, String> {

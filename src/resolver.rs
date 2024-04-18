@@ -14,6 +14,81 @@ pub struct Resolver {
 }
 
 impl Resolver {
+    pub fn resolve(&mut self, statements: &Vec<Stmt>) -> Result<(), String> {
+        for statement in statements {
+            self.resolve_stmt(statement)?;
+        }
+        return Ok(());
+    }
+
+    fn resolve_stmt(&mut self, statement: &Stmt) -> Result<(), String> {
+        match statement {
+            Stmt::Block(statements) => {
+                self.begin_scope();
+                self.resolve(statements);
+                self.end_scope();
+                Ok(())
+            }
+            Stmt::Var(name, initializer) => {
+                self.declare(name);
+                if let Some(init) = initializer {
+                    self.resolve_expr(init)?;
+                }
+                self.define(name);
+                Ok(())
+            }
+            Stmt::Function(name, params, body) => {
+                self.declare(name);
+                self.define(name);
+                self.resolve_function(statement);
+                Ok(())
+            }
+            _ => todo!(),
+        }
+    }
+
+    fn resolve_expr(&mut self, expr: &Expr) -> Result<(), String> {
+        match expr {
+            Expr::Variable(name) => {
+                if let Some(true) = self.scopes.last().and_then(|x| x.get(&name.lexeme)) {
+                    return Parser::error::<()>(
+                        name.clone(),
+                        "Can't read local variable in its own initializer.".to_string(),
+                    );
+                }
+                self.resolve_local(expr, name);
+                Ok(())
+            }
+            Expr::Assign(name, value) => {
+                self.resolve_expr(value);
+                self.resolve_local(expr, name);
+                Ok(())
+            }
+            _ => todo!(),
+        }
+    }
+
+    fn resolve_local(&mut self, expr: &Expr, name: &Token) {
+        let mut i = 0;
+        for scope in self.scopes.iter().rev() {
+            if scope.contains_key(&name.lexeme) {
+                self.interpreter.borrow_mut().resolve(expr, i);
+            }
+            i += 1;
+        }
+    }
+
+    fn resolve_function(&mut self, stmt: &Stmt) {
+        if let Stmt::Function(name, params, body) = stmt {
+            self.begin_scope();
+            for param in params {
+                self.declare(param);
+                self.define(param);
+            }
+            self.resolve(body);
+            self.end_scope();
+        }
+    }
 
     fn begin_scope(&mut self) -> () {
         self.scopes.push(HashMap::new());
