@@ -40,8 +40,7 @@ impl Resolver {
             Stmt::Function(name, _, _) => {
                 self.declare(name);
                 self.define(name);
-                self.resolve_function(statement);
-                Ok(())
+                self.resolve_function(statement)
             }
             Stmt::Expression(expr) => self.resolve_expr(expr),
             Stmt::If(condition, then_branch, maybe_else) => {
@@ -74,11 +73,29 @@ impl Resolver {
                 Ok(())
             }
             Expr::Assign(name, value) => {
-                self.resolve_expr(value);
+                self.resolve_expr(value)?;
                 self.resolve_local(expr, name);
                 Ok(())
             }
-            _ => todo!(),
+            Expr::Binary(left, _, right) => {
+                self.resolve_expr(left)?;
+                self.resolve_expr(right)
+            }
+            Expr::Call(callee, _, args) => {
+                self.resolve_expr(&callee)?;
+                for arg in args {
+                    self.resolve_expr(arg)?;
+                }
+                Ok(())
+            }
+            Expr::Grouping(expr) => self.resolve_expr(expr),
+            Expr::Literal(_) => Ok(()),
+            Expr::Logical(left, _, right) => {
+                self.resolve_expr(left)?;
+                self.resolve_expr(right)?;
+                Ok(())
+            }
+            Expr::Unary(_, right) => self.resolve_expr(&right),
         }
     }
 
@@ -92,16 +109,17 @@ impl Resolver {
         }
     }
 
-    fn resolve_function(&mut self, stmt: &Stmt) {
-        if let Stmt::Function(name, params, body) = stmt {
+    fn resolve_function(&mut self, stmt: &Stmt) -> Result<(), String> {
+        if let Stmt::Function(_, params, body) = stmt {
             self.begin_scope();
             for param in params {
                 self.declare(param);
                 self.define(param);
             }
-            self.resolve(body);
+            self.resolve(body)?;
             self.end_scope();
         }
+        Ok(())
     }
 
     fn begin_scope(&mut self) -> () {
