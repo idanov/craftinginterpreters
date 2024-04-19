@@ -39,6 +39,23 @@ impl Environment {
             .ok_or(format!("Undefined variable '{}'.", key.lexeme));
     }
 
+    pub fn get_at(&self, distance: usize, name: &String) -> Result<Literal, String> {
+        todo!()
+    }
+
+    pub fn assign_at(
+        &mut self,
+        distance: usize,
+        name: &Token,
+        val: Literal,
+    ) -> Result<Literal, String> {
+        todo!()
+    }
+
+    pub fn ancestor(&self, distance: usize) -> Rc<RefCell<Environment>> {
+        todo!()
+    }
+
     pub fn assign(&mut self, name: &Token, val: Literal) -> Result<Literal, String> {
         if self.values.contains_key(&name.lexeme) {
             self.values.insert(name.lexeme.clone(), val.clone());

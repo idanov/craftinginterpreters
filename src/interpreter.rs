@@ -4,17 +4,21 @@ use crate::lox_callable::LoxCallable;
 use crate::scanner::{Literal as Lit, Token, TokenType as TT};
 use crate::stmt::Stmt;
 use std::cell::RefCell;
+use std::collections::HashMap;
+use std::ptr;
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Interpreter {
     pub globals: Rc<RefCell<Environment>>,
+    locals: HashMap<*const Expr, usize>,
     environment: Rc<RefCell<Environment>>,
 }
 
 impl Interpreter {
     pub fn new() -> Self {
         let globals = Rc::new(RefCell::new(Environment::new()));
+        let locals = HashMap::new();
         let environment = globals.clone();
 
         globals.borrow_mut().define(
@@ -34,6 +38,7 @@ impl Interpreter {
 
         Interpreter {
             globals,
+            locals,
             environment,
         }
     }
@@ -42,7 +47,13 @@ impl Interpreter {
         match expr {
             Expr::Assign(name, value) => {
                 let val = self.evaluate(value)?;
-                self.environment.borrow_mut().assign(name, val)
+                if let Some(distance) = self.locals.get(&ptr::addr_of!(*expr)) {
+                    self.environment
+                        .borrow_mut()
+                        .assign_at(*distance, &name, val)
+                } else {
+                    self.globals.borrow_mut().assign(name, val)
+                }
             }
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
             Expr::Call(callee, paren, arguments) => self.eval_call(callee, &paren, &arguments),
@@ -65,12 +76,18 @@ impl Interpreter {
                 }
             }
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
-            Expr::Variable(name) => self.environment.borrow().get(name),
+            Expr::Variable(name) => {
+                if let Some(distance) = self.locals.get(&ptr::addr_of!(*expr)) {
+                    self.environment.borrow().get_at(*distance, &name.lexeme)
+                } else {
+                    self.globals.borrow().get(name)
+                }
+            }
         }
     }
 
-    pub fn resolve(&mut self, expr: &Expr, level: usize) {
-        todo!()
+    pub fn resolve(&mut self, expr: &Expr, depth: usize) {
+        self.locals.insert(ptr::addr_of!(*expr), depth);
     }
 
     pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<Option<Lit>, String> {
