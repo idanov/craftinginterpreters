@@ -25,7 +25,7 @@ impl Resolver {
         match statement {
             Stmt::Block(statements) => {
                 self.begin_scope();
-                self.resolve(statements);
+                self.resolve(statements)?;
                 self.end_scope();
                 Ok(())
             }
@@ -37,13 +37,27 @@ impl Resolver {
                 self.define(name);
                 Ok(())
             }
-            Stmt::Function(name, params, body) => {
+            Stmt::Function(name, _, _) => {
                 self.declare(name);
                 self.define(name);
                 self.resolve_function(statement);
                 Ok(())
             }
-            _ => todo!(),
+            Stmt::Expression(expr) => self.resolve_expr(expr),
+            Stmt::If(condition, then_branch, maybe_else) => {
+                self.resolve_expr(condition)?;
+                self.resolve_stmt(then_branch)?;
+                if let Some(else_branch) = maybe_else {
+                    self.resolve_stmt(else_branch)?;
+                }
+                Ok(())
+            }
+            Stmt::Print(expr) => self.resolve_expr(expr),
+            Stmt::Return(_, expr) => self.resolve_expr(expr),
+            Stmt::While(condition, body) => {
+                self.resolve_expr(condition)?;
+                self.resolve_stmt(body)
+            }
         }
     }
 
