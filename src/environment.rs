@@ -40,7 +40,12 @@ impl Environment {
     }
 
     pub fn get_at(&self, distance: usize, name: &String) -> Result<Literal, String> {
-        todo!()
+        if distance > 0 {
+            self.ancestor(distance).borrow().values.get(name).cloned()
+        } else {
+            self.values.get(name).cloned()
+        }
+        .ok_or(format!("Undefined variable '{}'.", name))
     }
 
     pub fn assign_at(
@@ -49,17 +54,37 @@ impl Environment {
         name: &Token,
         val: Literal,
     ) -> Result<Literal, String> {
-        todo!()
+        if distance > 0 {
+            self.ancestor(distance)
+                .borrow_mut()
+                .values
+                .insert(name.lexeme.clone(), val.clone());
+        } else {
+            self.values.insert(name.lexeme.clone(), val.clone());
+        }
+        Ok(val)
     }
 
     pub fn ancestor(&self, distance: usize) -> Rc<RefCell<Environment>> {
-        todo!()
+        let mut current = self.enclosing.clone().expect("No parent environment");
+
+        for _ in 1..distance {
+            current = {
+                let borrowed = current.borrow();
+                borrowed
+                    .enclosing
+                    .clone()
+                    .expect("No further parent environment")
+            };
+        }
+
+        current
     }
 
     pub fn assign(&mut self, name: &Token, val: Literal) -> Result<Literal, String> {
         if self.values.contains_key(&name.lexeme) {
             self.values.insert(name.lexeme.clone(), val.clone());
-            return Ok::<Literal, String>(val);
+            return Ok(val);
         }
 
         if let Some(x) = &mut self.enclosing {

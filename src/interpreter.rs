@@ -76,13 +76,15 @@ impl Interpreter {
                 }
             }
             Expr::Unary(op, expr) => self.eval_unary(op, expr),
-            Expr::Variable(name) => {
-                if let Some(distance) = self.locals.get(&ptr::addr_of!(*expr)) {
-                    self.environment.borrow().get_at(*distance, &name.lexeme)
-                } else {
-                    self.globals.borrow().get(name)
-                }
-            }
+            Expr::Variable(name) => self.lookup_variable(name, expr),
+        }
+    }
+
+    fn lookup_variable(&mut self, name: &Token, expr: &Expr) -> Result<Lit, String> {
+        if let Some(distance) = self.locals.get(&ptr::addr_of!(*expr)) {
+            self.environment.borrow().get_at(*distance, &name.lexeme)
+        } else {
+            self.globals.borrow().get(name)
         }
     }
 
