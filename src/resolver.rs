@@ -63,7 +63,7 @@ impl Resolver {
     fn resolve_expr(&mut self, expr: &Expr) -> Result<(), String> {
         match expr {
             Expr::Variable(name) => {
-                if let Some(true) = self.scopes.last().and_then(|x| x.get(&name.lexeme)) {
+                if let Some(false) = self.scopes.last().and_then(|x| x.get(&name.lexeme)) {
                     return Parser::error::<()>(
                         name.clone(),
                         "Can't read local variable in its own initializer.".to_string(),
@@ -82,7 +82,7 @@ impl Resolver {
                 self.resolve_expr(right)
             }
             Expr::Call(callee, _, args) => {
-                self.resolve_expr(&callee)?;
+                self.resolve_expr(callee)?;
                 for arg in args {
                     self.resolve_expr(arg)?;
                 }
@@ -95,7 +95,7 @@ impl Resolver {
                 self.resolve_expr(right)?;
                 Ok(())
             }
-            Expr::Unary(_, right) => self.resolve_expr(&right),
+            Expr::Unary(_, right) => self.resolve_expr(right),
         }
     }
 
