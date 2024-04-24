@@ -14,6 +14,14 @@ pub struct Resolver {
 }
 
 impl Resolver {
+
+    pub fn new(interpreter: Rc<RefCell<Interpreter>>) -> Self {
+        Resolver {
+            interpreter,
+            scopes: Vec::new()
+        }
+    }
+
     pub fn resolve(&mut self, statements: &Vec<Stmt>) -> Result<(), String> {
         for statement in statements {
             self.resolve_stmt(statement)?;

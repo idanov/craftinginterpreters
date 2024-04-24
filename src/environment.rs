@@ -45,7 +45,7 @@ impl Environment {
         } else {
             self.values.get(name).cloned()
         }
-        .ok_or(format!("Undefined variable '{}'.", name))
+        .ok_or(format!("Undefined variable '{}' at distance {}.", name, distance))
     }
 
     pub fn assign_at(

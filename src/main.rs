@@ -1,32 +1,36 @@
+use std::cell::RefCell;
 use std::env;
 use std::fs;
 use std::process::exit;
+use std::rc::Rc;
 
 mod environment;
 mod expr;
 mod interpreter;
+mod lox_callable;
 mod parser;
+mod resolver;
 mod scanner;
 mod stmt;
-mod lox_callable;
-mod resolver;
 
 use interpreter::Interpreter;
 use parser::Parser;
-use rustyline::DefaultEditor;
 use rustyline::error::ReadlineError;
+use rustyline::DefaultEditor;
 use stmt::Stmt;
 
 use colored::Colorize;
 
+use crate::resolver::Resolver;
+
 struct Lox {
-    interpreter: Interpreter,
+    interpreter: Rc<RefCell<Interpreter>>,
 }
 
 impl Lox {
     pub fn new() -> Self {
         Lox {
-            interpreter: Interpreter::new(),
+            interpreter: Rc::new(RefCell::new(Interpreter::new())),
         }
     }
 
@@ -50,15 +54,15 @@ impl Lox {
                 }
                 Err(ReadlineError::Interrupted) => {
                     println!("^C");
-                    break
+                    break;
                 }
                 Err(ReadlineError::Eof) => {
                     println!("^D");
-                    break
+                    break;
                 }
                 Err(err) => {
-                    eprintln!("{}", format!( "Error: {:?}", err ).red());
-                    break
+                    eprintln!("{}", format!("Error: {:?}", err).red());
+                    break;
                 }
             }
             // had_error = false;
@@ -80,18 +84,25 @@ impl Lox {
             .cloned()
             .collect::<Vec<_>>();
         let mut parser = Parser::new(tokens);
-        let statements: Result<Vec<Stmt>, String> = parser.parse();
+        let parsed: Result<Vec<Stmt>, String> = parser.parse();
 
-        match &statements {
-            Ok(xs) => {
-                for x in xs {
-                    println!("{}", x);
-                }
-            }
-            Err(e) => eprintln!("{}", e.red()),
+        if let Err(e) = &parsed {
+            eprintln!("{}", e.red());
         }
+
+        let statements: Vec<Stmt> = parsed.unwrap_or_default();
+        for x in &statements {
+            println!("{}", x);
+        }
+
+        println!("-------- Resolver results ------");
+        let mut resolver = Resolver::new(self.interpreter.clone());
+        if let Err(e) = resolver.resolve(&statements) {
+            eprintln!("{}", e.red());
+        };
+
         println!("-------- Interpreter results ------");
-        if let Err(e) = statements.and_then(|x| self.interpreter.interpret(&x)) {
+        if let Err(e) = self.interpreter.borrow_mut().interpret(&statements) {
             eprintln!("{}", e.red());
         };
     }
