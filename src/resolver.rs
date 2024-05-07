@@ -8,17 +8,24 @@ use crate::parser::Parser;
 use crate::scanner::Token;
 use crate::stmt::Stmt;
 
+#[derive(Debug, Clone, PartialEq, Copy)]
+enum FunctionType {
+    None,
+    Function,
+}
+
 pub struct Resolver {
     interpreter: Rc<RefCell<Interpreter>>,
     scopes: Vec<HashMap<String, bool>>,
+    current_function: FunctionType,
 }
 
 impl Resolver {
-
     pub fn new(interpreter: Rc<RefCell<Interpreter>>) -> Self {
         Resolver {
             interpreter,
-            scopes: Vec::new()
+            scopes: Vec::new(),
+            current_function: FunctionType::None,
         }
     }
 
@@ -38,7 +45,7 @@ impl Resolver {
                 Ok(())
             }
             Stmt::Var(name, initializer) => {
-                self.declare(name);
+                self.declare(name)?;
                 if let Some(init) = initializer {
                     self.resolve_expr(init)?;
                 }
@@ -46,9 +53,9 @@ impl Resolver {
                 Ok(())
             }
             Stmt::Function(name, _, _) => {
-                self.declare(name);
+                self.declare(name)?;
                 self.define(name);
-                self.resolve_function(statement)
+                self.resolve_function(statement, FunctionType::Function)
             }
             Stmt::Expression(expr) => self.resolve_expr(expr),
             Stmt::If(condition, then_branch, maybe_else) => {
@@ -60,7 +67,16 @@ impl Resolver {
                 Ok(())
             }
             Stmt::Print(expr) => self.resolve_expr(expr),
-            Stmt::Return(_, expr) => self.resolve_expr(expr),
+            Stmt::Return(keyword, expr) => {
+                if matches!(self.current_function, FunctionType::None) {
+                    Parser::error::<()>(
+                        keyword.clone(),
+                        "Can't return from top-level code.".to_string(),
+                    )
+                } else {
+                    self.resolve_expr(expr)
+                }
+            }
             Stmt::While(condition, body) => {
                 self.resolve_expr(condition)?;
                 self.resolve_stmt(body)
@@ -117,15 +133,18 @@ impl Resolver {
         }
     }
 
-    fn resolve_function(&mut self, stmt: &Stmt) -> Result<(), String> {
+    fn resolve_function(&mut self, stmt: &Stmt, type_: FunctionType) -> Result<(), String> {
         if let Stmt::Function(_, params, body) = stmt {
+            let enclosing_function = self.current_function;
+            self.current_function = type_;
             self.begin_scope();
             for param in params {
-                self.declare(param);
+                self.declare(param)?;
                 self.define(param);
             }
             self.resolve(body)?;
             self.end_scope();
+            self.current_function = enclosing_function;
         }
         Ok(())
     }
@@ -138,10 +157,17 @@ impl Resolver {
         self.scopes.pop();
     }
 
-    fn declare(&mut self, name: &Token) -> () {
+    fn declare(&mut self, name: &Token) -> Result<(), String> {
         if let Some(scope) = self.scopes.last_mut() {
+            if scope.contains_key(&name.lexeme) {
+                return Parser::error::<()>(
+                    name.clone(),
+                    "Already a variable with this name in this scope.".to_string(),
+                );
+            }
             scope.insert(name.lexeme.clone(), false);
         }
+        Ok(())
     }
 
     fn define(&mut self, name: &Token) -> () {

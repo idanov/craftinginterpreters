@@ -99,12 +99,13 @@ impl Lox {
         let mut resolver = Resolver::new(self.interpreter.clone());
         if let Err(e) = resolver.resolve(&statements) {
             eprintln!("{}", e.red());
-        };
+        } else {
+            println!("-------- Interpreter results ------");
+            if let Err(e) = self.interpreter.borrow_mut().interpret(&statements) {
+                eprintln!("{}", e.red());
+            };
+        }
 
-        println!("-------- Interpreter results ------");
-        if let Err(e) = self.interpreter.borrow_mut().interpret(&statements) {
-            eprintln!("{}", e.red());
-        };
     }
 
     // fn error(line: usize, message: String) {
