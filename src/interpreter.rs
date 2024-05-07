@@ -5,13 +5,12 @@ use crate::scanner::{Literal as Lit, Token, TokenType as TT};
 use crate::stmt::Stmt;
 use std::cell::RefCell;
 use std::collections::HashMap;
-use std::ptr;
 use std::rc::Rc;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct Interpreter {
     pub globals: Rc<RefCell<Environment>>,
-    locals: HashMap<*const Expr, usize>,
+    locals: HashMap<String, usize>,
     environment: Rc<RefCell<Environment>>,
 }
 
@@ -47,7 +46,8 @@ impl Interpreter {
         match expr {
             Expr::Assign(name, value) => {
                 let val = self.evaluate(value)?;
-                if let Some(distance) = self.locals.get(&ptr::addr_of!(*expr)) {
+
+                if let Some(distance) = self.locals.get(&format!("{:?}", expr)) {
                     self.environment
                         .borrow_mut()
                         .assign_at(*distance, &name, val)
@@ -81,7 +81,7 @@ impl Interpreter {
     }
 
     fn lookup_variable(&mut self, name: &Token, expr: &Expr) -> Result<Lit, String> {
-        if let Some(distance) = self.locals.get(&ptr::addr_of!(*expr)) {
+        if let Some(distance) = self.locals.get(&format!("{:?}", expr)) {
             self.environment.borrow().get_at(*distance, &name.lexeme)
         } else {
             self.globals.borrow().get(name)
@@ -89,7 +89,7 @@ impl Interpreter {
     }
 
     pub fn resolve(&mut self, expr: &Expr, depth: usize) {
-        self.locals.insert(ptr::addr_of!(*expr), depth);
+        self.locals.insert(format!("{:?}", expr), depth);
     }
 
     pub fn interpret(&mut self, statements: &Vec<Stmt>) -> Result<Option<Lit>, String> {
