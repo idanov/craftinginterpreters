@@ -44,6 +44,7 @@ impl Resolver {
                 self.end_scope();
                 Ok(())
             }
+            Stmt::Class(_, _) => todo!(),
             Stmt::Var(name, initializer) => {
                 self.declare(name)?;
                 if let Some(init) = initializer {

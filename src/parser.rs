@@ -16,10 +16,12 @@ Parser grammar:
 
     program        → declaration* EOF ;
 
-    declaration    → funDecl
+    declaration    → classDecl
+                   | funDecl
                    | varDecl
                    | statement ;
 
+    classDecl      → "class" IDENTIFIER "{" function* "}" ;
     funDecl        → "fun" function ;
     function       → IDENTIFIER "(" parameters? ")" block ;
     parameters     → IDENTIFIER ( "," IDENTIFIER )* ;
@@ -93,6 +95,9 @@ impl Parser {
     }
 
     fn declaration(&mut self) -> Result<Stmt, String> {
+        if self.munch(&[TokenType::Class]) {
+            return self.class_declaration();
+        }
         if self.munch(&[TokenType::Fun]) {
             return self.function("function");
         }
@@ -138,6 +143,25 @@ impl Parser {
 
         let body = self.block()?;
         return Ok(Stmt::Function(name, parameters, body));
+    }
+
+    fn class_declaration(&mut self) -> Result<Stmt, String> {
+        let name = self.consume(TokenType::Identifier, "Expect class name.")?;
+        self.consume(
+            TokenType::LeftBrace,
+            "Expect '{' before class body.",
+        )?;
+
+        let mut methods = Vec::new();
+        while !self.check(TokenType::RightBrace) && !self.is_at_end() {
+            methods.push(self.function("method")?);
+        }
+
+        self.consume(
+            TokenType::RightBrace,
+            "Expect '}' after class body.",
+        )?;
+        return Ok(Stmt::Class(name, methods));
     }
 
     fn var_declaration(&mut self) -> Result<Stmt, String> {

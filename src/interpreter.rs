@@ -123,6 +123,7 @@ impl Interpreter {
             Stmt::Block(statements) => {
                 self.execute_block(statements, Environment::nested(self.environment.clone()))
             }
+            Stmt::Class(_, _) => todo!(),
             Stmt::Expression(expr) => {
                 self.evaluate(expr)?;
                 Ok(None)
