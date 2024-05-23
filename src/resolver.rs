@@ -44,18 +44,20 @@ impl Resolver {
                 self.end_scope();
                 Ok(())
             }
-            Stmt::Class(_, _) => todo!(),
+            Stmt::Class(name, _) => {
+                self.declare(name)?;
+                self.define(name)
+            }
             Stmt::Var(name, initializer) => {
                 self.declare(name)?;
                 if let Some(init) = initializer {
                     self.resolve_expr(init)?;
                 }
-                self.define(name);
-                Ok(())
+                self.define(name)
             }
             Stmt::Function(name, _, _) => {
                 self.declare(name)?;
-                self.define(name);
+                self.define(name)?;
                 self.resolve_function(statement, FunctionType::Function)
             }
             Stmt::Expression(expr) => self.resolve_expr(expr),
@@ -141,7 +143,7 @@ impl Resolver {
             self.begin_scope();
             for param in params {
                 self.declare(param)?;
-                self.define(param);
+                self.define(param)?;
             }
             self.resolve(body)?;
             self.end_scope();
@@ -171,9 +173,10 @@ impl Resolver {
         Ok(())
     }
 
-    fn define(&mut self, name: &Token) -> () {
+    fn define(&mut self, name: &Token) -> Result<(), String> {
         if let Some(scope) = self.scopes.last_mut() {
             scope.insert(name.lexeme.clone(), true);
         }
+        Ok(())
     }
 }

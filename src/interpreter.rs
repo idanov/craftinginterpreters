@@ -123,7 +123,16 @@ impl Interpreter {
             Stmt::Block(statements) => {
                 self.execute_block(statements, Environment::nested(self.environment.clone()))
             }
-            Stmt::Class(_, _) => todo!(),
+            Stmt::Class(name, _) => {
+                self.environment
+                    .borrow_mut()
+                    .define(name.lexeme.clone(), Lit::None);
+                let klass = Lit::Callable(Box::new(LoxCallable::LoxClass {
+                    name: name.lexeme.clone(),
+                }));
+                self.environment.borrow_mut().assign(name, klass)?;
+                Ok(None)
+            }
             Stmt::Expression(expr) => {
                 self.evaluate(expr)?;
                 Ok(None)

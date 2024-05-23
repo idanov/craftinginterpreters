@@ -20,6 +20,9 @@ pub enum LoxCallable {
         body: Vec<Stmt>,
         closure: Rc<RefCell<Environment>>,
     },
+    LoxClass {
+        name: String,
+    },
 }
 
 impl LoxCallable {
@@ -36,6 +39,7 @@ impl LoxCallable {
                 body: _,
                 closure: _,
             } => params.len(),
+            Self::LoxClass { name: _ } => 0,
         }
     }
     pub fn call(
@@ -65,6 +69,9 @@ impl LoxCallable {
                 let res: Option<Literal> = interpreter.execute_block(body, environment)?;
                 Ok(res.unwrap_or(Literal::None))
             }
+            Self::LoxClass { name: _ } => {
+                todo!()
+            }
         }
     }
 }
@@ -83,6 +90,7 @@ impl Display for LoxCallable {
                 body: _,
                 closure: _,
             } => write!(f, "<fn {}>", name.lexeme),
+            Self::LoxClass { name } => write!(f, "<class {}>", name),
         }
     }
 }
