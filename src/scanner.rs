@@ -64,6 +64,7 @@ pub enum Literal {
     String(String),
     Boolean(bool),
     Callable(Box<LoxCallable>),
+    LoxInstance(Box<LoxCallable>),
     None,
 }
 
@@ -75,6 +76,7 @@ impl fmt::Display for Literal {
             Literal::String(s) => write!(f, "\"{}\"", s),
             Literal::Boolean(b) => write!(f, "{}", b),
             Literal::Callable(lox) => write!(f, "{}", lox),
+            Literal::LoxInstance(lox) => write!(f, "{} instance", lox),
             Literal::None => write!(f, "nil"),
         }
     }

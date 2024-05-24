@@ -70,7 +70,7 @@ impl LoxCallable {
                 Ok(res.unwrap_or(Literal::None))
             }
             Self::LoxClass { name: _ } => {
-                todo!()
+                Ok(Literal::LoxInstance(Box::new(self.clone())))
             }
         }
     }
