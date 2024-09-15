@@ -1,8 +1,11 @@
 use itertools::peek_nth;
+
 use itertools::structs::PeekNth;
 use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt;
+use std::hash::{Hash, Hasher};
+use std::rc::Rc;
 use std::str::Chars;
 
 use crate::lox_callable::LoxCallable;
@@ -58,14 +61,41 @@ pub enum TokenType {
     EOF,
 }
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum Literal {
     Double(f64),
     String(String),
     Boolean(bool),
-    Callable(Box<LoxCallable>),
-    LoxInstance(Box<LoxCallable>),
+    Callable(Rc<dyn LoxCallable>),
+    LoxInstance(Rc<dyn LoxCallable>),
     None,
+}
+
+impl PartialEq for Literal {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Literal::Double(a), Literal::Double(b)) => a == b,
+            (Literal::String(a), Literal::String(b)) => a == b,
+            (Literal::Boolean(a), Literal::Boolean(b)) => a == b,
+            (Literal::Callable(a), Literal::Callable(b)) => a == b,
+            (Literal::LoxInstance(a), Literal::LoxInstance(b)) => a == b,
+            (Literal::None, Literal::None) => true,
+            _ => false,
+        }
+    }
+}
+
+impl Hash for Literal {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            Literal::Double(float) => float.to_bits().hash(state),
+            Literal::String(string) => string.hash(state),
+            Literal::Boolean(boolean) => boolean.hash(state),
+            Literal::Callable(callable) => Rc::as_ptr(callable).hash(state),
+            Literal::LoxInstance(instance) => Rc::as_ptr(instance).hash(state),
+            Literal::None => 0.hash(state),
+        }
+    }
 }
 
 impl fmt::Display for Literal {
