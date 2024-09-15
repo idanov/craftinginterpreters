@@ -1,6 +1,6 @@
 use crate::environment::Environment;
 use crate::expr::Expr;
-use crate::lox_callable::LoxCallable;
+use crate::lox_callable::{LoxClass, LoxFunction, NativeFunction};
 use crate::scanner::{Literal as Lit, Token, TokenType as TT};
 use crate::stmt::Stmt;
 use std::cell::RefCell;
@@ -22,17 +22,17 @@ impl Interpreter {
 
         globals.borrow_mut().define(
             "clock".to_string(),
-            Lit::Callable(Box::new(LoxCallable::NativeFunction {
-                name: "clock".to_string(),
-                arity: 0,
-                callable: |_, _| {
+            Lit::Callable(Rc::new(NativeFunction::new(
+                "clock".to_string(),
+                0,
+                |_, _| {
                     let duration = SystemTime::now()
                         .duration_since(UNIX_EPOCH)
                         .expect("Time went backwards");
 
                     Ok(Lit::Double((duration.as_millis() as f64) / 1000.0))
                 },
-            })),
+            ))),
         );
 
         Interpreter {
@@ -127,9 +127,7 @@ impl Interpreter {
                 self.environment
                     .borrow_mut()
                     .define(name.lexeme.clone(), Lit::None);
-                let klass = Lit::Callable(Box::new(LoxCallable::LoxClass {
-                    name: name.lexeme.clone(),
-                }));
+                let klass = Lit::Callable(Rc::new(LoxClass::new(name.lexeme.clone())));
                 self.environment.borrow_mut().assign(name, klass)?;
                 Ok(None)
             }
@@ -140,12 +138,12 @@ impl Interpreter {
             Stmt::Function(name, params, body) => {
                 self.environment.borrow_mut().define(
                     name.lexeme.clone(),
-                    Lit::Callable(Box::new(LoxCallable::LoxFunction {
-                        name: name.clone(),
-                        params: params.to_vec(),
-                        body: body.to_vec(),
-                        closure: self.environment.clone(),
-                    })),
+                    Lit::Callable(Rc::new(LoxFunction::new(
+                        name.clone(),
+                        params.to_vec(),
+                        body.to_vec(),
+                        self.environment.clone(),
+                    ))),
                 );
                 Ok(None)
             }
