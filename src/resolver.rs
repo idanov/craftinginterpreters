@@ -131,6 +131,7 @@ impl Resolver {
         for scope in self.scopes.iter().rev() {
             if scope.contains_key(&name.lexeme) {
                 self.interpreter.borrow_mut().resolve(expr, i);
+                return;
             }
             i += 1;
         }

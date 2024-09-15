@@ -1,19 +1,36 @@
 var a = "global a";
 var b = "global b";
 var c = "global c";
+var d = "global d";
 {
-  var a = "outer a";
-  var b = "outer b";
+  var a = "first a";
+  var b = "first b";
+  var c = "first c";
   {
-    var a = "inner a";
+    var a = "second a";
+    var b = "second b";
+    {
+        var a = "third a";
+        print "-----";
+        print a;
+        print b;
+        print c;
+        print d;
+    }
+    print "-----";
     print a;
     print b;
     print c;
+    print d;
   }
+  print "-----";
   print a;
   print b;
   print c;
+  print d;
 }
+print "-----";
 print a;
 print b;
 print c;
+print d;
