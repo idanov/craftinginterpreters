@@ -7,6 +7,7 @@ pub enum Expr {
     Assign(Token, Box<Expr>),
     Binary(Box<Expr>, Token, Box<Expr>),
     Call(Box<Expr>, Token, Vec<Expr>),
+    Get(Box<Expr>, Token),
     Grouping(Box<Expr>),
     Literal(Literal),
     Logical(Box<Expr>, Token, Box<Expr>),
@@ -22,6 +23,7 @@ impl fmt::Display for Expr {
             Expr::Call(callee, _paren, arguments) => {
                 write!(f, "(call {} ({}))", callee, vec_to_string(arguments))
             }
+            Expr::Get(obj, name) => write!(f, "(. {} {})", obj, name),
             Expr::Grouping(expr) => write!(f, "(group {})", expr),
             Expr::Literal(lit) => write!(f, "{}", lit),
             Expr::Logical(left, op, right) => write!(f, "({} {} {})", op.lexeme, left, right),

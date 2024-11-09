@@ -62,7 +62,7 @@ Parser grammar:
     term           → factor ( ( "-" | "+" ) factor )* ;
     factor         → unary ( ( "/" | "*" ) unary )* ;
     unary          → ( "!" | "-" ) unary | call ;
-    call           → primary ( "(" arguments? ")" )* ;
+    call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
     arguments      → expression ( "," expression )* ;
 
     primary        → "true" | "false" | "nil"
@@ -392,6 +392,10 @@ impl Parser {
         loop {
             if self.munch(&[TokenType::LeftParen]) {
                 expr = self.finish_call(expr)?;
+            } else if self.munch(&[TokenType::Dot]) {
+                let name: Token =
+                    self.consume(TokenType::Identifier, "Expect property name after '.'.")?;
+                expr = Expr::Get(Box::new(expr), name);
             } else {
                 break;
             }

@@ -8,7 +8,7 @@ use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 use std::str::Chars;
 
-use crate::lox_callable::LoxCallable;
+use crate::lox_callable::{LoxInstance, LoxCallable};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TokenType {
@@ -67,7 +67,7 @@ pub enum Literal {
     String(String),
     Boolean(bool),
     Callable(Rc<dyn LoxCallable>),
-    LoxInstance(Rc<dyn LoxCallable>),
+    LoxInstance(Rc<LoxInstance>),
     None,
 }
 
@@ -106,7 +106,7 @@ impl fmt::Display for Literal {
             Literal::String(s) => write!(f, "\"{}\"", s),
             Literal::Boolean(b) => write!(f, "{}", b),
             Literal::Callable(lox) => write!(f, "{}", lox),
-            Literal::LoxInstance(lox) => write!(f, "{} instance", lox),
+            Literal::LoxInstance(lox) => write!(f, "{}", lox),
             Literal::None => write!(f, "nil"),
         }
     }

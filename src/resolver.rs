@@ -115,6 +115,7 @@ impl Resolver {
                 }
                 Ok(())
             }
+            Expr::Get(obj, _) => self.resolve_expr(obj),
             Expr::Grouping(expr) => self.resolve_expr(expr),
             Expr::Literal(_) => Ok(()),
             Expr::Logical(left, _, right) => {

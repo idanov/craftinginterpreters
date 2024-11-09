@@ -57,6 +57,7 @@ impl Interpreter {
             }
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
             Expr::Call(callee, paren, arguments) => self.eval_call(callee, paren, arguments),
+            Expr::Get(obj, name) => self.eval_get(obj, name),
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(lit),
             Expr::Logical(left, op, right) if op.token == TT::Or => {
@@ -271,6 +272,19 @@ impl Interpreter {
             Err(format!(
                 "[line {}:{}] Can only call functions and classes.",
                 paren.line, paren.column
+            ))
+        }
+    }
+
+    fn eval_get(&mut self, obj: &Expr, name: &Token) -> Result<Lit, String> {
+        let object = self.evaluate(obj)?;
+
+        if let Lit::LoxInstance(inst) = object {
+            inst.get(name)
+        } else {
+            Err(format!(
+                "[line {}:{}] Only instances have properties.",
+                name.line, name.column
             ))
         }
     }

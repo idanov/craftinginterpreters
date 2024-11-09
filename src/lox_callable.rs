@@ -1,7 +1,5 @@
 use std::{
-    cell::RefCell,
-    fmt::{Debug, Display},
-    rc::Rc,
+    cell::RefCell, collections::HashMap, fmt::{Debug, Display}, rc::Rc
 };
 
 use crate::{
@@ -128,7 +126,7 @@ impl LoxCallable for LoxClass {
         _interpreter: &mut Interpreter,
         _arguments: &[Literal],
     ) -> Result<Literal, String> {
-        Ok(Literal::LoxInstance(Rc::new(self.clone())))
+        Ok(Literal::LoxInstance(Rc::new(LoxInstance::new(Rc::new(self.clone())))))
     }
 
     fn arity(&self) -> usize {
@@ -139,5 +137,30 @@ impl LoxCallable for LoxClass {
 impl Display for LoxClass {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "<class {}>", self.name)
+    }
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct LoxInstance {
+    klass: Rc<LoxClass>,
+    fields: HashMap<String, Literal>
+
+}
+
+impl LoxInstance {
+    pub fn new(klass: Rc<LoxClass>) -> Self {
+        Self { klass, fields: HashMap::new()}
+    }
+    pub fn get(&self, name: &Token) -> Result<Literal, String> {
+        self.fields
+            .get(&name.lexeme)
+            .cloned()
+            .ok_or(format!("[line {}:{}] Undefined property '{}'.", name.line, name.column, name.lexeme))
+    }
+}
+
+impl Display for LoxInstance {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} instance", self.klass)
     }
 }
