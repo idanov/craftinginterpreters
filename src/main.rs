@@ -79,7 +79,7 @@ impl Lox {
         }
         println!("-------- Parser results ------");
         let tokens = raw_tokens
-            .into_iter()
+            .iter()
             .flatten()
             .cloned()
             .collect::<Vec<_>>();

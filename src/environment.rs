@@ -34,7 +34,7 @@ impl Environment {
             .or_else(|| {
                 self.enclosing
                     .as_ref()
-                    .and_then(|x| x.borrow().get(&key).ok())
+                    .and_then(|x| x.borrow().get(key).ok())
             })
             .ok_or(format!("Undefined variable '{}'.", key.lexeme));
     }
@@ -91,6 +91,6 @@ impl Environment {
             return x.borrow_mut().assign(name, val);
         }
 
-        return Err(format!("Undefined variable '{}'.", name.lexeme));
+        Err(format!("Undefined variable '{}'.", name.lexeme))
     }
 }

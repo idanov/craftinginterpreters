@@ -18,17 +18,17 @@ pub enum Stmt {
 impl fmt::Display for Stmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Stmt::Block(statements) => write!(f, "(block {})", vec_to_string(&statements)),
+            Stmt::Block(statements) => write!(f, "(block {})", vec_to_string(statements)),
             Stmt::Class(name, methods) => {
-                write!(f, "(class {} ({}))", name.lexeme, vec_to_string(&methods))
+                write!(f, "(class {} ({}))", name.lexeme, vec_to_string(methods))
             }
             Stmt::Expression(expr) => write!(f, "{}", expr),
             Stmt::Function(name, params, body) => write!(
                 f,
                 "(fun {} ({}) ({}))",
                 name.lexeme,
-                vec_to_string(&params),
-                vec_to_string(&body)
+                vec_to_string(params),
+                vec_to_string(body)
             ),
             Stmt::If(cond, then_branch, Some(else_branch)) => write!(
                 f,

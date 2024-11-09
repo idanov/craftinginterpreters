@@ -50,15 +50,15 @@ impl Interpreter {
                 if let Some(distance) = self.locals.get(&format!("{:?}", expr)) {
                     self.environment
                         .borrow_mut()
-                        .assign_at(*distance, &name, val)
+                        .assign_at(*distance, name, val)
                 } else {
                     self.globals.borrow_mut().assign(name, val)
                 }
             }
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
-            Expr::Call(callee, paren, arguments) => self.eval_call(callee, &paren, &arguments),
+            Expr::Call(callee, paren, arguments) => self.eval_call(callee, paren, arguments),
             Expr::Grouping(expr) => self.eval_grouping(expr),
-            Expr::Literal(lit) => self.eval_literal(&lit),
+            Expr::Literal(lit) => self.eval_literal(lit),
             Expr::Logical(left, op, right) if op.token == TT::Or => {
                 let res = self.evaluate(left)?;
                 if Interpreter::is_truthy(&res) {
@@ -96,7 +96,7 @@ impl Interpreter {
         for statement in statements {
             self.execute(statement)?;
         }
-        return Ok(None);
+        Ok(None)
     }
 
     pub fn execute_block(
@@ -149,9 +149,9 @@ impl Interpreter {
             }
             Stmt::If(cond, then_branch, maybe_else) => {
                 if Interpreter::is_truthy(&(self.evaluate(cond)?)) {
-                    self.execute(&then_branch)
+                    self.execute(then_branch)
                 } else if let Some(else_branch) = maybe_else {
-                    self.execute(&else_branch)
+                    self.execute(else_branch)
                 } else {
                     Ok(None)
                 }
@@ -165,7 +165,7 @@ impl Interpreter {
             Stmt::While(cond, body) => {
                 let mut res: Option<Lit> = None;
                 while Interpreter::is_truthy(&(self.evaluate(cond)?)) {
-                    res = self.execute(&body)?;
+                    res = self.execute(body)?;
                     if res.is_some() {
                         break;
                     }
@@ -251,11 +251,11 @@ impl Interpreter {
 
         let mut args: Vec<Lit> = Vec::new();
         for arg in arguments {
-            let res = self.evaluate(&arg)?;
+            let res = self.evaluate(arg)?;
             args.push(res);
         }
 
-        return if let Lit::Callable(func) = callable {
+        if let Lit::Callable(func) = callable {
             if args.len() != func.arity() {
                 return Err(format!(
                     "[line {}:{}] Expected {} arguments but got {}.",
@@ -272,15 +272,15 @@ impl Interpreter {
                 "[line {}:{}] Can only call functions and classes.",
                 paren.line, paren.column
             ))
-        };
+        }
     }
 
     fn eval_grouping(&mut self, expr: &Expr) -> Result<Lit, String> {
-        return self.evaluate(expr);
+        self.evaluate(expr)
     }
 
     fn eval_literal(&mut self, lit: &Lit) -> Result<Lit, String> {
-        return Ok(lit.clone());
+        Ok(lit.clone())
     }
 
     fn eval_unary(&mut self, op: &Token, expr: &Expr) -> Result<Lit, String> {

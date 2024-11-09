@@ -74,7 +74,7 @@ Parser grammar:
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
         Parser {
-            tokens: peek_nth(tokens.into_iter()),
+            tokens: peek_nth(tokens),
             prev: None,
         }
     }
@@ -91,7 +91,7 @@ impl Parser {
             }
         }
 
-        return Ok(statements);
+        Ok(statements)
     }
 
     fn declaration(&mut self) -> Result<Stmt, String> {
@@ -104,7 +104,7 @@ impl Parser {
         if self.munch(&[TokenType::Var]) {
             return self.var_declaration();
         }
-        return self.statement();
+        self.statement()
     }
 
     fn function(&mut self, kind: &str) -> Result<Stmt, String> {
@@ -142,26 +142,20 @@ impl Parser {
         )?;
 
         let body = self.block()?;
-        return Ok(Stmt::Function(name, parameters, body));
+        Ok(Stmt::Function(name, parameters, body))
     }
 
     fn class_declaration(&mut self) -> Result<Stmt, String> {
         let name = self.consume(TokenType::Identifier, "Expect class name.")?;
-        self.consume(
-            TokenType::LeftBrace,
-            "Expect '{' before class body.",
-        )?;
+        self.consume(TokenType::LeftBrace, "Expect '{' before class body.")?;
 
         let mut methods = Vec::new();
         while !self.check(TokenType::RightBrace) && !self.is_at_end() {
             methods.push(self.function("method")?);
         }
 
-        self.consume(
-            TokenType::RightBrace,
-            "Expect '}' after class body.",
-        )?;
-        return Ok(Stmt::Class(name, methods));
+        self.consume(TokenType::RightBrace, "Expect '}' after class body.")?;
+        Ok(Stmt::Class(name, methods))
     }
 
     fn var_declaration(&mut self) -> Result<Stmt, String> {
@@ -176,7 +170,7 @@ impl Parser {
             TokenType::Semicolon,
             "Expect ';' after variable declaration.",
         )?;
-        return Ok(Stmt::Var(name, initializer));
+        Ok(Stmt::Var(name, initializer))
     }
 
     fn statement(&mut self) -> Result<Stmt, String> {
@@ -199,7 +193,7 @@ impl Parser {
             return Ok(Stmt::Block(self.block()?));
         }
 
-        return self.expression_statement();
+        self.expression_statement()
     }
 
     fn for_statement(&mut self) -> Result<Stmt, String> {
@@ -238,7 +232,7 @@ impl Parser {
             body = Stmt::Block(vec![init, body])
         }
 
-        return Ok(body);
+        Ok(body)
     }
 
     fn if_statement(&mut self) -> Result<Stmt, String> {
@@ -251,13 +245,13 @@ impl Parser {
         } else {
             None
         };
-        return Ok(Stmt::If(cond, then_branch, else_branch));
+        Ok(Stmt::If(cond, then_branch, else_branch))
     }
 
     fn print_statement(&mut self) -> Result<Stmt, String> {
         let value = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after value.")?;
-        return Ok(Stmt::Print(value));
+        Ok(Stmt::Print(value))
     }
 
     fn return_statement(&mut self) -> Result<Stmt, String> {
@@ -267,7 +261,7 @@ impl Parser {
             value = self.expression()?;
         }
         self.consume(TokenType::Semicolon, "Expect ';' after return value.")?;
-        return Ok(Stmt::Return(keyword, value));
+        Ok(Stmt::Return(keyword, value))
     }
 
     fn while_statement(&mut self) -> Result<Stmt, String> {
@@ -276,13 +270,13 @@ impl Parser {
         self.consume(TokenType::RightParen, "Expect ')' after condition.")?;
         let body = self.statement()?;
 
-        return Ok(Stmt::While(cond, Box::new(body)));
+        Ok(Stmt::While(cond, Box::new(body)))
     }
 
     fn expression_statement(&mut self) -> Result<Stmt, String> {
         let expr = self.expression()?;
         self.consume(TokenType::Semicolon, "Expect ';' after expression.")?;
-        return Ok(Stmt::Expression(expr));
+        Ok(Stmt::Expression(expr))
     }
 
     fn block(&mut self) -> Result<Vec<Stmt>, String> {
@@ -292,11 +286,11 @@ impl Parser {
         }
 
         self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
-        return Ok(statements);
+        Ok(statements)
     }
 
     fn expression(&mut self) -> Result<Expr, String> {
-        return self.assignment();
+        self.assignment()
     }
 
     fn assignment(&mut self) -> Result<Expr, String> {
@@ -311,7 +305,7 @@ impl Parser {
 
             return Parser::error::<Expr>(equals, "Invalid assignment target.".to_string());
         }
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn or(&mut self) -> Result<Expr, String> {
@@ -321,7 +315,7 @@ impl Parser {
             let right = self.and()?;
             expr = Expr::Logical(Box::new(expr), operator, Box::new(right));
         }
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn and(&mut self) -> Result<Expr, String> {
@@ -331,7 +325,7 @@ impl Parser {
             let right = self.equality()?;
             expr = Expr::Logical(Box::new(expr), operator, Box::new(right));
         }
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn equality(&mut self) -> Result<Expr, String> {
@@ -342,7 +336,7 @@ impl Parser {
             let right: Expr = self.comparison()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn comparison(&mut self) -> Result<Expr, String> {
@@ -358,7 +352,7 @@ impl Parser {
             let right: Expr = self.term()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn term(&mut self) -> Result<Expr, String> {
@@ -369,7 +363,7 @@ impl Parser {
             let right: Expr = self.factor()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn factor(&mut self) -> Result<Expr, String> {
@@ -380,7 +374,7 @@ impl Parser {
             let right: Expr = self.unary()?;
             expr = Expr::Binary(Box::new(expr), operator, Box::new(right));
         }
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn unary(&mut self) -> Result<Expr, String> {
@@ -389,7 +383,7 @@ impl Parser {
             let right: Expr = self.unary()?;
             return Ok(Expr::Unary(operator, Box::new(right)));
         }
-        return self.call_expr();
+        self.call_expr()
     }
 
     fn call_expr(&mut self) -> Result<Expr, String> {
@@ -403,7 +397,7 @@ impl Parser {
             }
         }
 
-        return Ok(expr);
+        Ok(expr)
     }
 
     fn finish_call(&mut self, callee: Expr) -> Result<Expr, String> {
@@ -425,7 +419,7 @@ impl Parser {
 
         let paren: Token = self.consume(TokenType::RightParen, "Expect ')' after arguments.")?;
 
-        return Ok(Expr::Call(Box::new(callee), paren, arguments));
+        Ok(Expr::Call(Box::new(callee), paren, arguments))
     }
 
     fn primary(&mut self) -> Result<Expr, String> {
@@ -453,7 +447,7 @@ impl Parser {
             return Ok(Expr::Grouping(Box::new(expr)));
         }
 
-        return Parser::error::<Expr>(self.peek(), "Expect expression.".to_string());
+        Parser::error::<Expr>(self.peek(), "Expect expression.".to_string())
     }
 
     fn consume(&mut self, types: TokenType, message: &str) -> Result<Token, String> {
@@ -462,20 +456,20 @@ impl Parser {
         }
         let prev = self.previous();
         let msg = format!("{}. Last valid lexeme was {}.", message, prev.lexeme);
-        return Parser::error::<Token>(self.peek(), msg);
+        Parser::error::<Token>(self.peek(), msg)
     }
 
     pub fn error<T>(token: Token, message: String) -> Result<T, String> {
-        if token.token == TokenType::EOF {
-            return Err(format!(
+        if token.token == TokenType::Eof {
+            Err(format!(
                 "[line {}:{}] Error at end: {}",
                 token.line, token.column, message
-            ));
+            ))
         } else {
-            return Err(format!(
+            Err(format!(
                 "[line {}:{}] Error at {}: {}",
                 token.line, token.column, token.lexeme, message
-            ));
+            ))
         }
     }
 
@@ -513,25 +507,25 @@ impl Parser {
                 return true;
             }
         }
-        return false;
+        false
     }
 
     fn check(&mut self, token: TokenType) -> bool {
         if self.is_at_end() {
             return false;
         };
-        return self.peek().token == token;
+        self.peek().token == token
     }
 
     fn advance(&mut self) -> Token {
         if !self.is_at_end() {
             self.prev = self.tokens.next();
         }
-        return self.previous();
+        self.previous()
     }
 
     fn is_at_end(&mut self) -> bool {
-        return self.peek().token == TokenType::EOF;
+        self.peek().token == TokenType::Eof
     }
 
     fn peek(&mut self) -> Token {
@@ -543,10 +537,9 @@ impl Parser {
     }
 
     fn previous(&mut self) -> Token {
-        return self
-            .prev
+        self.prev
             .clone()
             .expect("No previous token to be processed")
-            .clone();
+            .clone()
     }
 }

@@ -33,7 +33,7 @@ impl Resolver {
         for statement in statements {
             self.resolve_stmt(statement)?;
         }
-        return Ok(());
+        Ok(())
     }
 
     fn resolve_stmt(&mut self, statement: &Stmt) -> Result<(), String> {
@@ -127,13 +127,11 @@ impl Resolver {
     }
 
     fn resolve_local(&mut self, expr: &Expr, name: &Token) {
-        let mut i = 0;
-        for scope in self.scopes.iter().rev() {
+        for (i, scope) in self.scopes.iter().rev().enumerate() {
             if scope.contains_key(&name.lexeme) {
                 self.interpreter.borrow_mut().resolve(expr, i);
                 return;
             }
-            i += 1;
         }
     }
 
@@ -153,11 +151,11 @@ impl Resolver {
         Ok(())
     }
 
-    fn begin_scope(&mut self) -> () {
+    fn begin_scope(&mut self) {
         self.scopes.push(HashMap::new());
     }
 
-    fn end_scope(&mut self) -> () {
+    fn end_scope(&mut self) {
         self.scopes.pop();
     }
 

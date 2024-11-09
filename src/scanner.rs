@@ -58,7 +58,7 @@ pub enum TokenType {
     Var,
     While,
 
-    EOF,
+    Eof,
 }
 
 #[derive(Debug, Clone)]
@@ -136,7 +136,7 @@ pub struct Scanner<'a> {
 }
 
 impl<'a> Scanner<'a> {
-    pub fn new(source: &String) -> Scanner {
+    pub fn new(source: &str) -> Scanner {
         let keywords: HashMap<&str, TokenType> = [
             ("and", TokenType::And),
             ("class", TokenType::Class),
@@ -171,7 +171,7 @@ impl<'a> Scanner<'a> {
     fn munch(&mut self, expected: char) -> bool {
         let res = self.chars.next_if_eq(&expected).is_some();
         self.current += res as usize;
-        return res;
+        res
     }
 
     fn peek(&mut self) -> char {
@@ -184,7 +184,7 @@ impl<'a> Scanner<'a> {
 
     fn advance(&mut self) -> Option<char> {
         self.current += 1;
-        return self.chars.next();
+        self.chars.next()
     }
 
     pub fn scan_tokens(&mut self) -> &Vec<Result<Token, String>> {
@@ -192,8 +192,8 @@ impl<'a> Scanner<'a> {
             self.scan_token();
         }
 
-        self.add_token(TokenType::EOF, String::from(""));
-        return &self.tokens;
+        self.add_token(TokenType::Eof, String::from(""));
+        &self.tokens
     }
 
     fn scan_token(&mut self) {
@@ -261,7 +261,7 @@ impl<'a> Scanner<'a> {
             }
 
             Some(x) if x.is_ascii_digit() => {
-                let mut digits: String = String::from(x.to_string());
+                let mut digits: String = x.to_string();
                 digits.extend(self.chars.take_while_ref(|y| y.is_ascii_digit()));
                 if self.peek() == '.' && self.peek_next().is_ascii_digit() {
                     digits.extend(self.chars.next());
@@ -272,13 +272,13 @@ impl<'a> Scanner<'a> {
                 self.current += count;
             }
             Some(x) if x.is_alphabetic() || x == '_' => {
-                let mut ident: String = String::from(x.to_string());
+                let mut ident: String = x.to_string();
                 ident.extend(
                     self.chars
                         .take_while_ref(|y| y.is_alphanumeric() || *y == '_'),
                 );
                 let count = ident.len() - 1;
-                let token = self.keywords.get(ident.as_str()).map(|y| y.clone());
+                let token = self.keywords.get(ident.as_str()).copied();
                 match token {
                     Some(y) => self.add_token(y, ident),
                     None => self.add_token(TokenType::Identifier, ident),

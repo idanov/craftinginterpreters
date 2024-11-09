@@ -19,7 +19,9 @@ impl fmt::Display for Expr {
         match self {
             Expr::Assign(name, value) => write!(f, "(= {} {})", name.lexeme, value),
             Expr::Binary(left, op, right) => write!(f, "({} {} {})", op.lexeme, left, right),
-            Expr::Call(callee, _paren, arguments) => write!(f, "(call {} ({}))", callee, vec_to_string(arguments)),
+            Expr::Call(callee, _paren, arguments) => {
+                write!(f, "(call {} ({}))", callee, vec_to_string(arguments))
+            }
             Expr::Grouping(expr) => write!(f, "(group {})", expr),
             Expr::Literal(lit) => write!(f, "{}", lit),
             Expr::Logical(left, op, right) => write!(f, "({} {} {})", op.lexeme, left, right),
@@ -29,7 +31,7 @@ impl fmt::Display for Expr {
     }
 }
 
-pub fn vec_to_string<T: ToString>(args: &Vec<T>) -> String {
+pub fn vec_to_string<T: ToString>(args: &[T]) -> String {
     args.iter()
         .map(|arg| arg.to_string())
         .collect::<Vec<_>>()
