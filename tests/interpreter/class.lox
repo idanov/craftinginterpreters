@@ -19,3 +19,6 @@ print DevonshireCream; // Prints "DevonshireCream".
 class Bagel {}
 var bagel = Bagel();
 print bagel; // Prints "Bagel instance".
+
+bagel.ref = bagel;
+print bagel.ref;

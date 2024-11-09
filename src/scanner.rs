@@ -2,6 +2,7 @@ use itertools::peek_nth;
 
 use itertools::structs::PeekNth;
 use itertools::Itertools;
+use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt;
 use std::hash::{Hash, Hasher};
@@ -67,7 +68,7 @@ pub enum Literal {
     String(String),
     Boolean(bool),
     Callable(Rc<dyn LoxCallable>),
-    LoxInstance(Rc<LoxInstance>),
+    LoxInstance(Rc<RefCell<LoxInstance>>),
     None,
 }
 
@@ -106,7 +107,7 @@ impl fmt::Display for Literal {
             Literal::String(s) => write!(f, "\"{}\"", s),
             Literal::Boolean(b) => write!(f, "{}", b),
             Literal::Callable(lox) => write!(f, "{}", lox),
-            Literal::LoxInstance(lox) => write!(f, "{}", lox),
+            Literal::LoxInstance(lox) => write!(f, "{}", lox.borrow()),
             Literal::None => write!(f, "nil"),
         }
     }

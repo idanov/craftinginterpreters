@@ -48,18 +48,18 @@ impl Interpreter {
                 let val = self.evaluate(value)?;
 
                 if let Some(distance) = self.locals.get(&format!("{:?}", expr)) {
-                    self.environment
-                        .borrow_mut()
-                        .assign_at(*distance, name, val)
+                    let mut env = self.environment.borrow_mut();
+                    env.assign_at(*distance, &name, val)
                 } else {
                     self.globals.borrow_mut().assign(name, val)
                 }
             }
             Expr::Binary(left, op, right) => self.eval_binary(left, op, right),
-            Expr::Call(callee, paren, arguments) => self.eval_call(callee, paren, arguments),
+            Expr::Call(callee, paren, arguments) => self.eval_call(callee, &paren, &arguments),
             Expr::Get(obj, name) => self.eval_get(obj, name),
+            Expr::Set(obj, name, val) => self.eval_set(obj, name, val),
             Expr::Grouping(expr) => self.eval_grouping(expr),
-            Expr::Literal(lit) => self.eval_literal(lit),
+            Expr::Literal(lit) => self.eval_literal(&lit),
             Expr::Logical(left, op, right) if op.token == TT::Or => {
                 let res = self.evaluate(left)?;
                 if Interpreter::is_truthy(&res) {
@@ -97,7 +97,7 @@ impl Interpreter {
         for statement in statements {
             self.execute(statement)?;
         }
-        Ok(None)
+        return Ok(None);
     }
 
     pub fn execute_block(
@@ -150,9 +150,9 @@ impl Interpreter {
             }
             Stmt::If(cond, then_branch, maybe_else) => {
                 if Interpreter::is_truthy(&(self.evaluate(cond)?)) {
-                    self.execute(then_branch)
+                    self.execute(&then_branch)
                 } else if let Some(else_branch) = maybe_else {
-                    self.execute(else_branch)
+                    self.execute(&else_branch)
                 } else {
                     Ok(None)
                 }
@@ -166,7 +166,7 @@ impl Interpreter {
             Stmt::While(cond, body) => {
                 let mut res: Option<Lit> = None;
                 while Interpreter::is_truthy(&(self.evaluate(cond)?)) {
-                    res = self.execute(body)?;
+                    res = self.execute(&body)?;
                     if res.is_some() {
                         break;
                     }
@@ -252,11 +252,11 @@ impl Interpreter {
 
         let mut args: Vec<Lit> = Vec::new();
         for arg in arguments {
-            let res = self.evaluate(arg)?;
+            let res = self.evaluate(&arg)?;
             args.push(res);
         }
 
-        if let Lit::Callable(func) = callable {
+        return if let Lit::Callable(func) = callable {
             if args.len() != func.arity() {
                 return Err(format!(
                     "[line {}:{}] Expected {} arguments but got {}.",
@@ -273,28 +273,35 @@ impl Interpreter {
                 "[line {}:{}] Can only call functions and classes.",
                 paren.line, paren.column
             ))
-        }
+        };
     }
-
+    
     fn eval_get(&mut self, obj: &Expr, name: &Token) -> Result<Lit, String> {
         let object = self.evaluate(obj)?;
-
         if let Lit::LoxInstance(inst) = object {
-            inst.get(name)
+            inst.borrow().get(&name)
         } else {
-            Err(format!(
-                "[line {}:{}] Only instances have properties.",
-                name.line, name.column
-            ))
+            Err(format!("[line {}:{}] Only instances have properties.", name.line, name.column))
+        }
+    }
+    
+    fn eval_set(&mut self, obj: &Expr, name: &Token, val: &Expr) -> Result<Lit, String> {
+        let object = self.evaluate(obj)?;
+        if let Lit::LoxInstance(inst) = object {
+            let value = self.evaluate(val)?;
+            inst.borrow_mut().set(&name, &value);
+            Ok(value)
+        } else {
+            Err(format!("[line {}:{}] Only instances have fields.", name.line, name.column))
         }
     }
 
     fn eval_grouping(&mut self, expr: &Expr) -> Result<Lit, String> {
-        self.evaluate(expr)
+        return self.evaluate(expr);
     }
 
     fn eval_literal(&mut self, lit: &Lit) -> Result<Lit, String> {
-        Ok(lit.clone())
+        return Ok(lit.clone());
     }
 
     fn eval_unary(&mut self, op: &Token, expr: &Expr) -> Result<Lit, String> {

@@ -126,7 +126,8 @@ impl LoxCallable for LoxClass {
         _interpreter: &mut Interpreter,
         _arguments: &[Literal],
     ) -> Result<Literal, String> {
-        Ok(Literal::LoxInstance(Rc::new(LoxInstance::new(Rc::new(self.clone())))))
+        let lox = RefCell::new(LoxInstance::new(Rc::new(self.clone())));
+        Ok(Literal::LoxInstance(Rc::new(lox)))
     }
 
     fn arity(&self) -> usize {
@@ -156,6 +157,10 @@ impl LoxInstance {
             .get(&name.lexeme)
             .cloned()
             .ok_or(format!("[line {}:{}] Undefined property '{}'.", name.line, name.column, name.lexeme))
+    }
+
+    pub fn set(&mut self, name: &Token, val: &Literal) {
+        self.fields.insert(name.lexeme.clone(), val.clone());
     }
 }
 
