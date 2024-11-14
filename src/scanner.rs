@@ -188,7 +188,7 @@ impl<'a> Scanner<'a> {
         self.chars.next()
     }
 
-    pub fn scan_tokens(&mut self) -> &Vec<Result<Token, String>> {
+    pub fn scan_tokens(&mut self) -> &[Result<Token, String>] {
         while self.chars.peek().is_some() {
             self.scan_token();
         }

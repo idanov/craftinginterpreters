@@ -34,7 +34,7 @@ impl Lox {
         }
     }
 
-    pub fn run_file(&mut self, filename: &String) {
+    pub fn run_file(&mut self, filename: &str) {
         let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
         self.run(contents);
         // if had_error {

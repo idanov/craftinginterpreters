@@ -39,7 +39,7 @@ impl Environment {
             .ok_or(format!("Undefined variable '{}'.", key.lexeme));
     }
 
-    pub fn get_at(&self, distance: usize, name: &String) -> Result<Literal, String> {
+    pub fn get_at(&self, distance: usize, name: &str) -> Result<Literal, String> {
         if distance > 0 {
             self.ancestor(distance).borrow().values.get(name).cloned()
         } else {

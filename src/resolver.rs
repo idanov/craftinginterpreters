@@ -29,7 +29,7 @@ impl Resolver {
         }
     }
 
-    pub fn resolve(&mut self, statements: &Vec<Stmt>) -> Result<(), String> {
+    pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), String> {
         for statement in statements {
             self.resolve_stmt(statement)?;
         }

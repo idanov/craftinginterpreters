@@ -159,8 +159,8 @@ impl LoxInstance {
             .ok_or(format!("[line {}:{}] Undefined property '{}'.", name.line, name.column, name.lexeme))
     }
 
-    pub fn set(&mut self, name: &Token, val: &Literal) {
-        self.fields.insert(name.lexeme.clone(), val.clone());
+    pub fn set(&mut self, name: &Token, val: Literal) {
+        self.fields.insert(name.lexeme.clone(), val);
     }
 }
 
