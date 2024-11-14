@@ -12,6 +12,7 @@ use crate::stmt::Stmt;
 enum FunctionType {
     None,
     Function,
+    Method,
 }
 
 pub struct Resolver {
@@ -44,9 +45,14 @@ impl Resolver {
                 self.end_scope();
                 Ok(())
             }
-            Stmt::Class(name, _) => {
+            Stmt::Class(name, methods) => {
                 self.declare(name)?;
-                self.define(name)
+                self.define(name)?;
+                for method in methods {
+                    let declaration = FunctionType::Method;
+                    self.resolve_function(method, declaration)?;
+                }
+                Ok(())
             }
             Stmt::Var(name, initializer) => {
                 self.declare(name)?;

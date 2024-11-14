@@ -124,11 +124,23 @@ impl Interpreter {
             Stmt::Block(statements) => {
                 self.execute_block(statements, Environment::nested(self.environment.clone()))
             }
-            Stmt::Class(name, _) => {
+            Stmt::Class(name, class_methods) => {
                 self.environment
                     .borrow_mut()
                     .define(name.lexeme.clone(), Lit::None);
-                let klass = Lit::Callable(Rc::new(LoxClass::new(name.lexeme.clone())));
+
+                let mut methods: HashMap<String, Lit> = HashMap::new();
+                for x in class_methods {
+                    if let Stmt::Function(name, params, body) = x {
+                        let method = LoxFunction::new(name.clone(), params.to_vec(), body.to_vec(), self
+                            .environment
+                            .clone()
+                        );
+                        methods.insert(name.lexeme.clone(), Lit::Callable(Rc::new(method)));
+                    }
+                }
+
+                let klass = Lit::Callable(Rc::new(LoxClass::new(name.lexeme.clone(), methods)));
                 self.environment.borrow_mut().assign(name, klass)?;
                 Ok(None)
             }

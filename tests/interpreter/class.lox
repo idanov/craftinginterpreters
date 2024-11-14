@@ -22,3 +22,21 @@ print bagel; // Prints "Bagel instance".
 
 bagel.ref = bagel;
 print bagel.ref;
+
+class Box {}
+
+fun notMethod(argument) {
+  print "called function with " + argument;
+}
+
+var box = Box();
+box.function = notMethod;
+box.function("argument");
+
+class Bacon {
+  eat() {
+    print "Crunch crunch crunch!";
+  }
+}
+
+Bacon().eat(); // Prints "Crunch crunch crunch!".

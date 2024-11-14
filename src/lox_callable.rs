@@ -1,7 +1,6 @@
 use std::{
     cell::RefCell, collections::HashMap, fmt::{Debug, Display}, rc::Rc
 };
-
 use crate::{
     environment::Environment,
     interpreter::Interpreter,
@@ -113,11 +112,16 @@ impl Display for LoxFunction {
 #[derive(Debug, PartialEq, Clone)]
 pub struct LoxClass {
     name: String,
+    methods: HashMap<String, Literal>,
 }
 
 impl LoxClass {
-    pub fn new(name: String) -> Self {
-        Self { name }
+    pub fn new(name: String, methods: HashMap<String, Literal>) -> Self {
+        Self { name, methods }
+    }
+
+    pub fn find_method(&self, name: &str) -> Option<&Literal> {
+        self.methods.get(name)
     }
 }
 impl LoxCallable for LoxClass {
@@ -155,6 +159,7 @@ impl LoxInstance {
     pub fn get(&self, name: &Token) -> Result<Literal, String> {
         self.fields
             .get(&name.lexeme)
+            .or_else(|| self.klass.find_method(&name.lexeme))
             .cloned()
             .ok_or(format!("[line {}:{}] Undefined property '{}'.", name.line, name.column, name.lexeme))
     }
