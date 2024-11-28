@@ -48,10 +48,16 @@ impl Resolver {
             Stmt::Class(name, methods) => {
                 self.declare(name)?;
                 self.define(name)?;
+
+                self.begin_scope();
+                self.scopes.last_mut().map(|x| x.insert("this".to_string(), true) );
+
                 for method in methods {
                     let declaration = FunctionType::Method;
                     self.resolve_function(method, declaration)?;
                 }
+
+                self.end_scope();
                 Ok(())
             }
             Stmt::Var(name, initializer) => {
@@ -125,6 +131,10 @@ impl Resolver {
             Expr::Set(obj, _, val) => {
                 self.resolve_expr(val)?;
                 self.resolve_expr(obj)?;
+                Ok(())
+            },
+            Expr::This(keyword) => {
+                self.resolve_local(expr, keyword);
                 Ok(())
             },
             Expr::Grouping(expr) => self.resolve_expr(expr),

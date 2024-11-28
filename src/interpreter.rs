@@ -1,6 +1,6 @@
 use crate::environment::Environment;
 use crate::expr::Expr;
-use crate::lox_callable::{LoxClass, LoxFunction, NativeFunction};
+use crate::lox_callable::{LoxClass, LoxFunction, NativeFunction, LoxInstance};
 use crate::scanner::{Literal as Lit, Token, TokenType as TT};
 use crate::stmt::Stmt;
 use std::cell::RefCell;
@@ -58,6 +58,7 @@ impl Interpreter {
             Expr::Call(callee, paren, arguments) => self.eval_call(callee, paren, arguments),
             Expr::Get(obj, name) => self.eval_get(obj, name),
             Expr::Set(obj, name, val) => self.eval_set(obj, name, val),
+            Expr::This(keyword) => self.lookup_variable(keyword, expr),
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(lit),
             Expr::Logical(left, op, right) if op.token == TT::Or => {
@@ -129,14 +130,14 @@ impl Interpreter {
                     .borrow_mut()
                     .define(name.lexeme.clone(), Lit::None);
 
-                let mut methods: HashMap<String, Lit> = HashMap::new();
+                let mut methods: HashMap<String, Rc<LoxFunction>> = HashMap::new();
                 for x in class_methods {
                     if let Stmt::Function(name, params, body) = x {
                         let method = LoxFunction::new(name.clone(), params.to_vec(), body.to_vec(), self
                             .environment
                             .clone()
                         );
-                        methods.insert(name.lexeme.clone(), Lit::Callable(Rc::new(method)));
+                        methods.insert(name.lexeme.clone(), Rc::new(method));
                     }
                 }
 
@@ -291,7 +292,7 @@ impl Interpreter {
     fn eval_get(&mut self, obj: &Expr, name: &Token) -> Result<Lit, String> {
         let object = self.evaluate(obj)?;
         if let Lit::LoxInstance(inst) = object {
-            inst.borrow().get(name)
+            LoxInstance::get(inst, name)
         } else {
             Err(format!("[line {}:{}] Only instances have properties.", name.line, name.column))
         }

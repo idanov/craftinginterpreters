@@ -81,6 +81,13 @@ impl LoxFunction {
             closure,
         }
     }
+
+    pub fn bind(&self, instance: Rc<RefCell<LoxInstance>>) -> Rc<LoxFunction> {
+        let environment = Environment::nested(self.closure.clone());
+        environment.borrow_mut().define("this".to_string(), Literal::LoxInstance(Rc::clone(&instance)));
+        Rc::new(LoxFunction::new(self.name.clone(), self.params.to_vec(), self.body.to_vec(),
+        environment))
+    }
 }
 impl LoxCallable for LoxFunction {
     fn call(
@@ -112,16 +119,16 @@ impl Display for LoxFunction {
 #[derive(Debug, PartialEq, Clone)]
 pub struct LoxClass {
     name: String,
-    methods: HashMap<String, Literal>,
+    methods: HashMap<String, Rc<LoxFunction>>,
 }
 
 impl LoxClass {
-    pub fn new(name: String, methods: HashMap<String, Literal>) -> Self {
+    pub fn new(name: String, methods: HashMap<String, Rc<LoxFunction>>) -> Self {
         Self { name, methods }
     }
 
-    pub fn find_method(&self, name: &str) -> Option<&Literal> {
-        self.methods.get(name)
+    pub fn find_method(&self, name: &str) -> Option<Rc<LoxFunction>> {
+        self.methods.get(name).cloned()
     }
 }
 impl LoxCallable for LoxClass {
@@ -156,11 +163,13 @@ impl LoxInstance {
     pub fn new(klass: Rc<LoxClass>) -> Self {
         Self { klass, fields: HashMap::new()}
     }
-    pub fn get(&self, name: &Token) -> Result<Literal, String> {
-        self.fields
+    pub fn get(obj: Rc<RefCell<Self>>, name: &Token) -> Result<Literal, String> {
+        let lambda = || {obj.borrow().klass.find_method(&name.lexeme)
+            .map(|x| Literal::Callable(x.bind(Rc::clone(&obj))))};
+        obj.borrow().fields
             .get(&name.lexeme)
-            .or_else(|| self.klass.find_method(&name.lexeme))
             .cloned()
+            .or_else(lambda)
             .ok_or(format!("[line {}:{}] Undefined property '{}'.", name.line, name.column, name.lexeme))
     }
 

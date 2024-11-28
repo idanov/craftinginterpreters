@@ -302,7 +302,7 @@ impl Parser {
             if let Expr::Variable(name) = expr {
                 return Ok(Expr::Assign(name, Box::new(value)));
             } else if let Expr::Get(obj, name) = expr {
-                return Ok(Expr::Set(obj, name, Box::new(value)))
+                return Ok(Expr::Set(obj, name, Box::new(value)));
             }
 
             return Parser::error::<Expr>(equals, "Invalid assignment target.".to_string());
@@ -441,6 +441,10 @@ impl Parser {
 
         if self.munch(&[TokenType::Number, TokenType::String]) {
             return Ok(Expr::Literal(self.previous().literal));
+        }
+
+        if self.munch(&[TokenType::This]) {
+            return Ok(Expr::This(self.previous()));
         }
 
         if self.munch(&[TokenType::Identifier]) {
