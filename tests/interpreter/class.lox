@@ -92,9 +92,19 @@ class Thing {
 var callback = Thing().getCallback();
 callback();
 
-print this;
+// The resolver should complain about those when uncommented
+// print this;
 
-fun notAMethod() {
-  print this;
+// fun notAMethod() {
+//  print this;
+// }
+// notAMethod();
+
+class Foo {
+  init() {
+    print this;
+  }
 }
-notAMethod();
+
+var foo = Foo();
+print foo.init();
