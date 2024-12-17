@@ -5,13 +5,14 @@ use std::rc::Rc;
 use crate::expr::Expr;
 use crate::interpreter::Interpreter;
 use crate::parser::Parser;
-use crate::scanner::Token;
+use crate::scanner::{Literal, Token};
 use crate::stmt::Stmt;
 
 #[derive(Debug, Clone, PartialEq, Copy)]
 enum FunctionType {
     None,
     Function,
+    Initializer,
     Method,
 }
 
@@ -64,7 +65,10 @@ impl Resolver {
                 self.scopes.last_mut().map(|x| x.insert("this".to_string(), true) );
 
                 for method in methods {
-                    let declaration = FunctionType::Method;
+                    let declaration = match method {
+                        Stmt::Function(method_token, _, _) if method_token.lexeme == "init" => FunctionType::Initializer,
+                        _ => FunctionType::Method,
+                    };
                     self.resolve_function(method, declaration)?;
                 }
 
@@ -95,15 +99,18 @@ impl Resolver {
                 Ok(())
             }
             Stmt::Print(expr) => self.resolve_expr(expr),
-            Stmt::Return(keyword, expr) => {
-                if matches!(self.current_function, FunctionType::None) {
+            Stmt::Return(keyword, expr) => match self.current_function {
+                FunctionType::None =>
                     Parser::error::<()>(
                         keyword.clone(),
                         "Can't return from top-level code.".to_string(),
-                    )
-                } else {
-                    self.resolve_expr(expr)
-                }
+                    ),
+                FunctionType::Initializer if !matches!(expr, Expr::Literal(Literal::None)) =>
+                    Parser::error::<()>(
+                        keyword.clone(),
+                        "Can't return a value from an initializer.".to_string(),
+                    ),
+                _ => self.resolve_expr(expr)
             }
             Stmt::While(condition, body) => {
                 self.resolve_expr(condition)?;
