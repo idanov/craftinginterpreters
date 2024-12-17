@@ -135,7 +135,8 @@ impl Interpreter {
                     if let Stmt::Function(name, params, body) = x {
                         let method = LoxFunction::new(name.clone(), params.to_vec(), body.to_vec(), self
                             .environment
-                            .clone()
+                            .clone(),
+                             name.lexeme == "init",
                         );
                         methods.insert(name.lexeme.clone(), Rc::new(method));
                     }
@@ -157,6 +158,7 @@ impl Interpreter {
                         params.to_vec(),
                         body.to_vec(),
                         self.environment.clone(),
+                        false
                     ))),
                 );
                 Ok(None)

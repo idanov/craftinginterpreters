@@ -65,6 +65,7 @@ pub struct LoxFunction {
     params: Vec<Token>,
     body: Vec<Stmt>,
     closure: Rc<RefCell<Environment>>,
+    is_initializer: bool,
 }
 
 impl LoxFunction {
@@ -73,12 +74,14 @@ impl LoxFunction {
         params: Vec<Token>,
         body: Vec<Stmt>,
         closure: Rc<RefCell<Environment>>,
+        is_initializer: bool,
     ) -> Self {
         Self {
             name,
             params,
             body,
             closure,
+            is_initializer,
         }
     }
 
@@ -86,7 +89,7 @@ impl LoxFunction {
         let environment = Environment::nested(self.closure.clone());
         environment.borrow_mut().define("this".to_string(), Literal::LoxInstance(Rc::clone(&instance)));
         Rc::new(LoxFunction::new(self.name.clone(), self.params.to_vec(), self.body.to_vec(),
-        environment))
+        environment, self.is_initializer))
     }
 }
 impl LoxCallable for LoxFunction {
@@ -103,7 +106,11 @@ impl LoxCallable for LoxFunction {
                 .define(param.lexeme.clone(), arg.clone());
         }
         let res: Option<Literal> = interpreter.execute_block(&self.body, environment)?;
-        Ok(res.unwrap_or(Literal::None))
+        if self.is_initializer {
+            self.closure.borrow_mut().get_at(0, "this")
+        } else {
+            Ok(res.unwrap_or(Literal::None))
+        }
     }
 
     fn arity(&self) -> usize {
