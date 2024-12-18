@@ -36,7 +36,7 @@ impl Lox {
 
     pub fn run_file(&mut self, filename: &str) {
         let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
-        self.run(contents);
+        self.run(&contents);
         // if had_error {
         //     exit(65);
         // }
@@ -50,7 +50,7 @@ impl Lox {
             match readline {
                 Ok(line) => {
                     let _ = rl.add_history_entry(line.as_str());
-                    self.run(line);
+                    self.run(&line);
                 }
                 Err(ReadlineError::Interrupted) => {
                     println!("^C");
@@ -69,9 +69,9 @@ impl Lox {
         }
     }
 
-    pub fn run(&mut self, source: String) {
+    pub fn run(&mut self, source: &str) {
         // scan tokens and print them
-        let mut scan = scanner::Scanner::new(&source);
+        let mut scan = scanner::Scanner::new(source);
         let raw_tokens = scan.scan_tokens();
         println!("-------- Scanner results ------");
         for token in raw_tokens {

@@ -29,12 +29,12 @@ pub struct NativeFunction {
 
 impl NativeFunction {
     pub fn new(
-        name: String,
+        name: &str,
         arity: usize,
         callable: fn(&mut Interpreter, &[Literal]) -> Result<Literal, String>,
     ) -> Self {
         Self {
-            name,
+            name: name.into(),
             arity,
             callable,
         }
@@ -87,7 +87,7 @@ impl LoxFunction {
 
     pub fn bind(&self, instance: Rc<RefCell<LoxInstance>>) -> Rc<LoxFunction> {
         let environment = Environment::nested(self.closure.clone());
-        environment.borrow_mut().define("this".to_string(), Literal::LoxInstance(Rc::clone(&instance)));
+        environment.borrow_mut().define("this", Literal::LoxInstance(Rc::clone(&instance)));
         Rc::new(LoxFunction::new(self.name.clone(), self.params.to_vec(), self.body.to_vec(),
         environment, self.is_initializer))
     }
@@ -103,7 +103,7 @@ impl LoxCallable for LoxFunction {
         for (param, arg) in it {
             environment
                 .borrow_mut()
-                .define(param.lexeme.clone(), arg.clone());
+                .define(&param.lexeme, arg.clone());
         }
         let res: Option<Literal> = interpreter.execute_block(&self.body, environment)?;
         if self.is_initializer {
@@ -130,8 +130,8 @@ pub struct LoxClass {
 }
 
 impl LoxClass {
-    pub fn new(name: String, methods: HashMap<String, Rc<LoxFunction>>) -> Self {
-        Self { name, methods }
+    pub fn new(name: &str, methods: HashMap<String, Rc<LoxFunction>>) -> Self {
+        Self { name: name.into(), methods }
     }
 
     pub fn find_method(&self, name: &str) -> Option<Rc<LoxFunction>> {

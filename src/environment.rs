@@ -22,8 +22,8 @@ impl Environment {
         }))
     }
 
-    pub fn define(&mut self, key: String, value: Literal) {
-        self.values.insert(key, value);
+    pub fn define(&mut self, key: &str, value: Literal) {
+        self.values.insert(key.into(), value);
     }
 
     pub fn get(&self, key: &Token) -> Result<Literal, String> {

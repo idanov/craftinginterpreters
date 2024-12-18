@@ -103,12 +103,12 @@ impl Resolver {
                 FunctionType::None =>
                     Parser::error::<()>(
                         keyword.clone(),
-                        "Can't return from top-level code.".to_string(),
+                        "Can't return from top-level code.",
                     ),
                 FunctionType::Initializer if !matches!(expr, Expr::Literal(Literal::None)) =>
                     Parser::error::<()>(
                         keyword.clone(),
-                        "Can't return a value from an initializer.".to_string(),
+                        "Can't return a value from an initializer.",
                     ),
                 _ => self.resolve_expr(expr)
             }
@@ -125,7 +125,7 @@ impl Resolver {
                 if let Some(false) = self.scopes.last().and_then(|x| x.get(&name.lexeme)) {
                     return Parser::error::<()>(
                         name.clone(),
-                        "Can't read local variable in its own initializer.".to_string(),
+                        "Can't read local variable in its own initializer.",
                     );
                 }
                 self.resolve_local(expr, name);
@@ -155,7 +155,7 @@ impl Resolver {
             },
             Expr::This(keyword) => {
                 if self.current_class == ClassType::None {
-                    Parser::error::<()>(keyword.clone(), "Can't use 'this' outside of a class.".to_string())
+                    Parser::error::<()>(keyword.clone(), "Can't use 'this' outside of a class.")
                 } else {
                     self.resolve_local(expr, keyword);
                     Ok(())
@@ -210,7 +210,7 @@ impl Resolver {
             if scope.contains_key(&name.lexeme) {
                 return Parser::error::<()>(
                     name.clone(),
-                    "Already a variable with this name in this scope.".to_string(),
+                    "Already a variable with this name in this scope.",
                 );
             }
             scope.insert(name.lexeme.clone(), false);

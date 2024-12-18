@@ -123,7 +123,7 @@ impl Parser {
                 if parameters.len() >= 255 {
                     return Parser::error::<Stmt>(
                         self.peek(),
-                        "Can't have more than 255 parameters.".to_string(),
+                        "Can't have more than 255 parameters.",
                     );
                 }
                 let param = self.consume(TokenType::Identifier, "Expect parameter name.")?;
@@ -305,7 +305,7 @@ impl Parser {
                 return Ok(Expr::Set(obj, name, Box::new(value)));
             }
 
-            return Parser::error::<Expr>(equals, "Invalid assignment target.".to_string());
+            return Parser::error::<Expr>(equals, "Invalid assignment target.");
         }
         Ok(expr)
     }
@@ -413,7 +413,7 @@ impl Parser {
                 if arguments.len() >= 255 {
                     return Parser::error::<Expr>(
                         self.peek(),
-                        "Can't have more than 255 arguments.".to_string(),
+                        "Can't have more than 255 arguments.",
                     );
                 }
                 arguments.push(self.expression()?);
@@ -457,7 +457,7 @@ impl Parser {
             return Ok(Expr::Grouping(Box::new(expr)));
         }
 
-        Parser::error::<Expr>(self.peek(), "Expect expression.".to_string())
+        Parser::error::<Expr>(self.peek(), "Expect expression.")
     }
 
     fn consume(&mut self, types: TokenType, message: &str) -> Result<Token, String> {
@@ -466,10 +466,10 @@ impl Parser {
         }
         let prev = self.previous();
         let msg = format!("{}. Last valid lexeme was {}.", message, prev.lexeme);
-        Parser::error::<Token>(self.peek(), msg)
+        Parser::error::<Token>(self.peek(), &msg)
     }
 
-    pub fn error<T>(token: Token, message: String) -> Result<T, String> {
+    pub fn error<T>(token: Token, message: &str) -> Result<T, String> {
         if token.token == TokenType::Eof {
             Err(format!(
                 "[line {}:{}] Error at end: {}",

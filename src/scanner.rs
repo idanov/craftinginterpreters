@@ -193,41 +193,41 @@ impl<'a> Scanner<'a> {
             self.scan_token();
         }
 
-        self.add_token(TokenType::Eof, String::from(""));
+        self.add_token(TokenType::Eof, "".into());
         &self.tokens
     }
 
     fn scan_token(&mut self) {
         let c = self.advance();
         match c {
-            Some(x @ '(') => self.add_token(TokenType::LeftParen, x.to_string()),
-            Some(x @ ')') => self.add_token(TokenType::RightParen, x.to_string()),
-            Some(x @ '{') => self.add_token(TokenType::LeftBrace, x.to_string()),
-            Some(x @ '}') => self.add_token(TokenType::RightBrace, x.to_string()),
-            Some(x @ ',') => self.add_token(TokenType::Comma, x.to_string()),
-            Some(x @ '.') => self.add_token(TokenType::Dot, x.to_string()),
-            Some(x @ '-') => self.add_token(TokenType::Minus, x.to_string()),
-            Some(x @ '+') => self.add_token(TokenType::Plus, x.to_string()),
-            Some(x @ ';') => self.add_token(TokenType::Semicolon, x.to_string()),
-            Some(x @ '*') => self.add_token(TokenType::Star, x.to_string()),
+            Some(x @ '(') => self.add_token(TokenType::LeftParen, x.into()),
+            Some(x @ ')') => self.add_token(TokenType::RightParen, x.into()),
+            Some(x @ '{') => self.add_token(TokenType::LeftBrace, x.into()),
+            Some(x @ '}') => self.add_token(TokenType::RightBrace, x.into()),
+            Some(x @ ',') => self.add_token(TokenType::Comma, x.into()),
+            Some(x @ '.') => self.add_token(TokenType::Dot, x.into()),
+            Some(x @ '-') => self.add_token(TokenType::Minus, x.into()),
+            Some(x @ '+') => self.add_token(TokenType::Plus, x.into()),
+            Some(x @ ';') => self.add_token(TokenType::Semicolon, x.into()),
+            Some(x @ '*') => self.add_token(TokenType::Star, x.into()),
 
-            Some('!') if self.munch('=') => self.add_token(TokenType::BangEqual, "!=".to_string()),
-            Some(x @ '!') => self.add_token(TokenType::Bang, x.to_string()),
-            Some('=') if self.munch('=') => self.add_token(TokenType::EqualEqual, "==".to_string()),
-            Some(x @ '=') => self.add_token(TokenType::Equal, x.to_string()),
-            Some('<') if self.munch('=') => self.add_token(TokenType::LessEqual, "<=".to_string()),
-            Some(x @ '<') => self.add_token(TokenType::Less, x.to_string()),
+            Some('!') if self.munch('=') => self.add_token(TokenType::BangEqual, "!=".into()),
+            Some(x @ '!') => self.add_token(TokenType::Bang, x.into()),
+            Some('=') if self.munch('=') => self.add_token(TokenType::EqualEqual, "==".into()),
+            Some(x @ '=') => self.add_token(TokenType::Equal, x.into()),
+            Some('<') if self.munch('=') => self.add_token(TokenType::LessEqual, "<=".into()),
+            Some(x @ '<') => self.add_token(TokenType::Less, x.into()),
             Some('>') if self.munch('=') => {
-                self.add_token(TokenType::GreaterEqual, ">=".to_string())
+                self.add_token(TokenType::GreaterEqual, ">=".into())
             }
-            Some(x @ '>') => self.add_token(TokenType::Greater, x.to_string()),
+            Some(x @ '>') => self.add_token(TokenType::Greater, x.into()),
 
             Some('/') if self.munch('/') => {
                 let _: String = self.chars.by_ref().take_while(|&x| x != '\n').collect();
                 self.line += 1;
                 self.current = 0;
             }
-            Some(x @ '/') => self.add_token(TokenType::Slash, x.to_string()),
+            Some(x @ '/') => self.add_token(TokenType::Slash, x.into()),
             Some(' ') | Some('\t') | Some('\r') => (),
             Some('\n') => {
                 self.line += 1;

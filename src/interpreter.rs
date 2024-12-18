@@ -21,9 +21,9 @@ impl Interpreter {
         let environment = globals.clone();
 
         globals.borrow_mut().define(
-            "clock".to_string(),
+            "clock",
             Lit::Callable(Rc::new(NativeFunction::new(
-                "clock".to_string(),
+                "clock",
                 0,
                 |_, _| {
                     let duration = SystemTime::now()
@@ -128,7 +128,7 @@ impl Interpreter {
             Stmt::Class(name, class_methods) => {
                 self.environment
                     .borrow_mut()
-                    .define(name.lexeme.clone(), Lit::None);
+                    .define(&name.lexeme, Lit::None);
 
                 let mut methods: HashMap<String, Rc<LoxFunction>> = HashMap::new();
                 for x in class_methods {
@@ -142,7 +142,7 @@ impl Interpreter {
                     }
                 }
 
-                let klass = Lit::Callable(Rc::new(LoxClass::new(name.lexeme.clone(), methods)));
+                let klass = Lit::Callable(Rc::new(LoxClass::new(&name.lexeme, methods)));
                 self.environment.borrow_mut().assign(name, klass)?;
                 Ok(None)
             }
@@ -152,7 +152,7 @@ impl Interpreter {
             }
             Stmt::Function(name, params, body) => {
                 self.environment.borrow_mut().define(
-                    name.lexeme.clone(),
+                    &name.lexeme,
                     Lit::Callable(Rc::new(LoxFunction::new(
                         name.clone(),
                         params.to_vec(),
@@ -191,14 +191,14 @@ impl Interpreter {
             Stmt::Var(name, None) => {
                 self.environment
                     .borrow_mut()
-                    .define(name.lexeme.clone(), Lit::None);
+                    .define(&name.lexeme, Lit::None);
                 Ok(None)
             }
             Stmt::Var(name, Some(initializer)) => {
                 let value = self.evaluate(initializer)?;
                 self.environment
                     .borrow_mut()
-                    .define(name.lexeme.clone(), value);
+                    .define(&name.lexeme, value);
                 Ok(None)
             }
         }
