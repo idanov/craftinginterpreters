@@ -176,11 +176,11 @@ impl<'a> Scanner<'a> {
     }
 
     fn peek(&mut self) -> char {
-        return *self.chars.peek().unwrap_or(&'\0');
+        *self.chars.peek().unwrap_or(&'\0')
     }
 
     fn peek_next(&mut self) -> char {
-        return *self.chars.peek_nth(1).unwrap_or(&'\0');
+        *self.chars.peek_nth(1).unwrap_or(&'\0')
     }
 
     fn advance(&mut self) -> Option<char> {
