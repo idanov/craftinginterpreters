@@ -1,5 +1,5 @@
 use std::{
-    cell::RefCell, collections::HashMap, fmt::{Debug, Display}, rc::Rc
+    cell::RefCell, collections::HashMap, fmt::{Debug, Display}, rc::Rc, ptr
 };
 use crate::{
     environment::Environment,
@@ -16,7 +16,7 @@ pub trait LoxCallable: Display + Debug {
 
 impl PartialEq for dyn LoxCallable {
     fn eq(&self, other: &Self) -> bool {
-        self == other
+        ptr::eq(self as *const Self, other as *const Self)
     }
 }
 
