@@ -78,8 +78,8 @@ impl PartialEq for Literal {
             (Literal::Double(a), Literal::Double(b)) => a == b,
             (Literal::String(a), Literal::String(b)) => a == b,
             (Literal::Boolean(a), Literal::Boolean(b)) => a == b,
-            (Literal::Callable(a), Literal::Callable(b)) => a == b,
-            (Literal::LoxInstance(a), Literal::LoxInstance(b)) => a == b,
+            (Literal::Callable(a), Literal::Callable(b)) => Rc::ptr_eq(a, b),
+            (Literal::LoxInstance(a), Literal::LoxInstance(b)) => Rc::ptr_eq(a, b),
             (Literal::None, Literal::None) => true,
             _ => false,
         }
