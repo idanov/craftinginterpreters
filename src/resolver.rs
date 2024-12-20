@@ -54,12 +54,21 @@ impl Resolver {
                 self.end_scope();
                 Ok(())
             }
-            Stmt::Class(name, methods) => {
+            Stmt::Class(name, superclass, methods) => {
                 let enclosing_class = self.current_class;
                 self.current_class = ClassType::Class;
 
                 self.declare(name)?;
                 self.define(name)?;
+
+                if matches!(superclass, Some(Expr::Variable(parent)) if name.lexeme == parent
+                    .lexeme)
+                {
+                    return Parser::error::<()>(name.clone(), "A class can't inherit from itself.");
+                }
+                if let Some(parent) = superclass {
+                    self.resolve_expr(parent)?;
+                }
 
                 self.begin_scope();
                 self.scopes

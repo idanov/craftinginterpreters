@@ -170,13 +170,19 @@ impl Display for LoxFunction {
 #[derive(Debug, PartialEq, Clone)]
 pub struct LoxClass {
     name: String,
+    parent: Option<Rc<LoxClass>>,
     methods: HashMap<String, Rc<LoxFunction>>,
 }
 
 impl LoxClass {
-    pub fn new(name: &str, methods: HashMap<String, Rc<LoxFunction>>) -> Self {
+    pub fn new(
+        name: &str,
+        parent: Option<Rc<LoxClass>>,
+        methods: HashMap<String, Rc<LoxFunction>>,
+    ) -> Self {
         Self {
             name: name.into(),
+            parent,
             methods,
         }
     }

@@ -1,7 +1,7 @@
 use crate::environment::Environment;
 use crate::expr::Expr;
 use crate::lox_callable::{LoxCallable, LoxClass, LoxFunction, LoxInstance, NativeFunction};
-use crate::scanner::{Literal as Lit, Token, TokenType as TT};
+use crate::scanner::{Literal as Lit, Literal, Token, TokenType as TT};
 use crate::stmt::Stmt;
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -125,7 +125,22 @@ impl Interpreter {
             Stmt::Block(statements) => {
                 self.execute_block(statements, Environment::nested(self.environment.clone()))
             }
-            Stmt::Class(name, class_methods) => {
+            Stmt::Class(name, superclass, class_methods) => {
+                let parent = superclass
+                    .clone()
+                    .map(|x| self.evaluate(&x))
+                    .transpose()?
+                    .and_then(|x| match x {
+                        Literal::Callable(LoxCallable::LoxClass(class)) => {
+                            Some(Ok(Rc::clone(&class)))
+                        }
+                        _ => Some(Err(format!(
+                            "[line {}:{}] Superclass must be a class.",
+                            name.line, name.column
+                        ))),
+                    })
+                    .transpose()?;
+
                 self.environment
                     .borrow_mut()
                     .define(&name.lexeme, Lit::None);
@@ -146,6 +161,7 @@ impl Interpreter {
 
                 let klass = Lit::Callable(LoxCallable::LoxClass(Rc::new(LoxClass::new(
                     &name.lexeme,
+                    parent,
                     methods,
                 ))));
                 self.environment.borrow_mut().assign(name, klass)?;

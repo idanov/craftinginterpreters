@@ -5,7 +5,7 @@ use std::fmt;
 #[derive(Debug, Clone, PartialEq)]
 pub enum Stmt {
     Block(Vec<Stmt>),
-    Class(Token, Vec<Stmt>),
+    Class(Token, Option<Expr>, Vec<Stmt>),
     Expression(Expr),
     Function(Token, Vec<Token>, Vec<Stmt>),
     If(Expr, Box<Stmt>, Option<Box<Stmt>>),
@@ -19,7 +19,7 @@ impl fmt::Display for Stmt {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Stmt::Block(statements) => write!(f, "(block {})", vec_to_string(statements)),
-            Stmt::Class(name, methods) => {
+            Stmt::Class(name, _, methods) => {
                 write!(f, "(class {} ({}))", name.lexeme, vec_to_string(methods))
             }
             Stmt::Expression(expr) => write!(f, "{}", expr),

@@ -109,3 +109,13 @@ class Foo {
 
 var foo = Foo();
 print foo.init();
+
+class Doughnut {
+  // General doughnut stuff...
+}
+
+class BostonCream < Doughnut {
+  // Boston Cream-specific stuff...
+}
+
+print BostonCream;
