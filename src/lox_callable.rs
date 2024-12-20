@@ -188,7 +188,13 @@ impl LoxClass {
     }
 
     pub fn find_method(&self, name: &str) -> Option<Rc<LoxFunction>> {
-        self.methods.get(name).cloned()
+        if self.methods.contains_key(name) {
+            self.methods.get(name).cloned()
+        } else if let Some(parent) = &self.parent {
+            parent.find_method(name).map(|p| p.clone())
+        } else {
+            None
+        }
     }
     fn call(
         &self,
