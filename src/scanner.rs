@@ -252,7 +252,7 @@ impl<'a> Scanner<'a> {
                         self.line, self.current
                     )))
                 } else {
-                    self.add_string_token(TokenType::String, res);
+                    self.add_string_token(TokenType::String, &res);
                     self.line += lines;
                     self.current = count;
                     self.advance(); // consume final "
@@ -313,11 +313,11 @@ impl<'a> Scanner<'a> {
         }));
     }
 
-    fn add_string_token(&mut self, token: TokenType, lexeme: String) {
+    fn add_string_token(&mut self, token: TokenType, lexeme: &str) {
         self.tokens.push(Ok(Token {
             token,
-            lexeme: lexeme.clone(),
-            literal: Literal::String(lexeme),
+            lexeme: lexeme.into(),
+            literal: Literal::String(lexeme.into()),
             line: self.line,
             column: self.current,
         }));

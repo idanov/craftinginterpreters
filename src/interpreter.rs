@@ -60,7 +60,10 @@ impl Interpreter {
             Expr::Set(obj, name, val) => self.eval_set(obj, name, val),
             Expr::Super(keyword, method) => {
                 let distance = *self.locals.get(&format!("{:?}", expr)).unwrap_or(&0);
-                let superclass = self.environment.borrow().get_at(distance, &keyword.lexeme)?;
+                let superclass = self
+                    .environment
+                    .borrow()
+                    .get_at(distance, &keyword.lexeme)?;
                 let instance = self.environment.borrow().get_at(distance - 1, "this")?;
                 let res =
                     if let (Lit::Callable(LoxCallable::LoxClass(parent)), Lit::LoxInstance(obj)) =
@@ -151,9 +154,7 @@ impl Interpreter {
                     .map(|x| self.evaluate(&x))
                     .transpose()?
                     .map(|x| match x {
-                        Literal::Callable(LoxCallable::LoxClass(class)) => {
-                            Ok(Rc::clone(&class))
-                        }
+                        Literal::Callable(LoxCallable::LoxClass(class)) => Ok(Rc::clone(&class)),
                         _ => Err(format!(
                             "[line {}:{}] Superclass must be a class.",
                             name.line, name.column

@@ -65,7 +65,7 @@ impl Resolver {
                 if matches!(superclass, Some(Expr::Variable(parent)) if name.lexeme == parent
                     .lexeme)
                 {
-                    return Parser::error::<()>(name.clone(), "A class can't inherit from itself.");
+                    return Parser::error::<()>(name, "A class can't inherit from itself.");
                 }
                 if let Some(parent) = superclass {
                     self.current_class = ClassType::SubClass;
@@ -127,13 +127,10 @@ impl Resolver {
             Stmt::Print(expr) => self.resolve_expr(expr),
             Stmt::Return(keyword, expr) => match self.current_function {
                 FunctionType::None => {
-                    Parser::error::<()>(keyword.clone(), "Can't return from top-level code.")
+                    Parser::error::<()>(keyword, "Can't return from top-level code.")
                 }
                 FunctionType::Initializer if !matches!(expr, Expr::Literal(Literal::None)) => {
-                    Parser::error::<()>(
-                        keyword.clone(),
-                        "Can't return a value from an initializer.",
-                    )
+                    Parser::error::<()>(keyword, "Can't return a value from an initializer.")
                 }
                 _ => self.resolve_expr(expr),
             },
@@ -149,7 +146,7 @@ impl Resolver {
             Expr::Variable(name) => {
                 if let Some(false) = self.scopes.last().and_then(|x| x.get(&name.lexeme)) {
                     return Parser::error::<()>(
-                        name.clone(),
+                        name,
                         "Can't read local variable in its own initializer.",
                     );
                 }
@@ -180,17 +177,17 @@ impl Resolver {
             }
             Expr::Super(keyword, _) => {
                 if self.current_class == ClassType::None {
-                    Parser::error::<()>(keyword.clone(), "Can't use 'super' outside of a class.")
+                    Parser::error::<()>(keyword, "Can't use 'super' outside of a class.")
                 } else if self.current_class != ClassType::SubClass {
-                    Parser::error::<()>(keyword.clone(), "Can't use 'super' in a class with no superclass.")
+                    Parser::error::<()>(keyword, "Can't use 'super' in a class with no superclass.")
                 } else {
                     self.resolve_local(expr, keyword);
                     Ok(())
                 }
-            },
+            }
             Expr::This(keyword) => {
                 if self.current_class == ClassType::None {
-                    Parser::error::<()>(keyword.clone(), "Can't use 'this' outside of a class.")
+                    Parser::error::<()>(keyword, "Can't use 'this' outside of a class.")
                 } else {
                     self.resolve_local(expr, keyword);
                     Ok(())
@@ -244,7 +241,7 @@ impl Resolver {
         if let Some(scope) = self.scopes.last_mut() {
             if scope.contains_key(&name.lexeme) {
                 return Parser::error::<()>(
-                    name.clone(),
+                    name,
                     "Already a variable with this name in this scope.",
                 );
             }
