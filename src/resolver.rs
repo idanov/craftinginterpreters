@@ -70,6 +70,13 @@ impl Resolver {
                     self.resolve_expr(parent)?;
                 }
 
+                if superclass.is_some() {
+                    self.begin_scope();
+                    self.scopes
+                        .last_mut()
+                        .map(|x| x.insert("super".to_string(), true));
+                }
+
                 self.begin_scope();
                 self.scopes
                     .last_mut()
@@ -86,6 +93,10 @@ impl Resolver {
                 }
 
                 self.end_scope();
+
+                if superclass.is_some() {
+                    self.end_scope();
+                }
 
                 self.current_class = enclosing_class;
                 Ok(())
@@ -165,6 +176,10 @@ impl Resolver {
                 self.resolve_expr(obj)?;
                 Ok(())
             }
+            Expr::Super(keyword, _) => {
+                self.resolve_local(expr, keyword);
+                Ok(())
+            },
             Expr::This(keyword) => {
                 if self.current_class == ClassType::None {
                     Parser::error::<()>(keyword.clone(), "Can't use 'this' outside of a class.")

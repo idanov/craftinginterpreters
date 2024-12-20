@@ -9,6 +9,7 @@ pub enum Expr {
     Call(Box<Expr>, Token, Vec<Expr>),
     Get(Box<Expr>, Token),
     Set(Box<Expr>, Token, Box<Expr>),
+    Super(Token, Token),
     This(Token),
     Grouping(Box<Expr>),
     Literal(Literal),
@@ -27,6 +28,7 @@ impl fmt::Display for Expr {
             }
             Expr::Get(obj, name) => write!(f, "(. {} {})", obj, name),
             Expr::Set(obj, name, val) => write!(f, "(.= {} {} {})", obj, name, val),
+            Expr::Super(keyword, method) => write!(f, "({} {})", keyword, method),
             Expr::This(keyword) => write!(f, "{}", keyword),
             Expr::Grouping(expr) => write!(f, "(group {})", expr),
             Expr::Literal(lit) => write!(f, "{}", lit),

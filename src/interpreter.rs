@@ -58,6 +58,26 @@ impl Interpreter {
             Expr::Call(callee, paren, arguments) => self.eval_call(callee, paren, arguments),
             Expr::Get(obj, name) => self.eval_get(obj, name),
             Expr::Set(obj, name, val) => self.eval_set(obj, name, val),
+            Expr::Super(keyword, method) => {
+                let distance = *self.locals.get(&format!("{:?}", expr)).unwrap_or(&0);
+                let superclass = self.environment.borrow().get_at(distance, &keyword.lexeme)?;
+                let instance = self.environment.borrow().get_at(distance - 1, "this")?;
+                let res =
+                    if let (Lit::Callable(LoxCallable::LoxClass(parent)), Lit::LoxInstance(obj)) =
+                        (superclass, instance)
+                    {
+                        parent
+                            .find_method(&method.lexeme)
+                            .map(|m| LoxCallable::LoxFunction(m.bind(obj.clone())))
+                            .map(Lit::Callable)
+                    } else {
+                        None
+                    };
+                res.ok_or(format!(
+                    "[line {}:{}] Undefined property '{}'.",
+                    method.line, method.column, method.lexeme
+                ))
+            }
             Expr::This(keyword) => self.lookup_variable(keyword, expr),
             Expr::Grouping(expr) => self.eval_grouping(expr),
             Expr::Literal(lit) => self.eval_literal(lit),
@@ -130,20 +150,28 @@ impl Interpreter {
                     .clone()
                     .map(|x| self.evaluate(&x))
                     .transpose()?
-                    .and_then(|x| match x {
+                    .map(|x| match x {
                         Literal::Callable(LoxCallable::LoxClass(class)) => {
-                            Some(Ok(Rc::clone(&class)))
+                            Ok(Rc::clone(&class))
                         }
-                        _ => Some(Err(format!(
+                        _ => Err(format!(
                             "[line {}:{}] Superclass must be a class.",
                             name.line, name.column
-                        ))),
+                        )),
                     })
                     .transpose()?;
 
                 self.environment
                     .borrow_mut()
                     .define(&name.lexeme, Lit::None);
+
+                if let Some(super_ref) = &parent {
+                    self.environment = Environment::nested(self.environment.clone());
+                    self.environment.borrow_mut().define(
+                        "super",
+                        Literal::Callable(LoxCallable::LoxClass(super_ref.clone())),
+                    );
+                }
 
                 let mut methods: HashMap<String, Rc<LoxFunction>> = HashMap::new();
                 for x in class_methods {
@@ -164,6 +192,12 @@ impl Interpreter {
                     parent,
                     methods,
                 ))));
+
+                if superclass.is_some() {
+                    let ancestor = self.environment.borrow().ancestor(0);
+                    self.environment = ancestor;
+                }
+
                 self.environment.borrow_mut().assign(name, klass)?;
                 Ok(None)
             }

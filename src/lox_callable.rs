@@ -191,7 +191,7 @@ impl LoxClass {
         if self.methods.contains_key(name) {
             self.methods.get(name).cloned()
         } else if let Some(parent) = &self.parent {
-            parent.find_method(name).map(|p| p.clone())
+            parent.find_method(name)
         } else {
             None
         }

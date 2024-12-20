@@ -66,10 +66,9 @@ Parser grammar:
     call           → primary ( "(" arguments? ")" | "." IDENTIFIER )* ;
     arguments      → expression ( "," expression )* ;
 
-    primary        → "true" | "false" | "nil"
-                   | NUMBER | STRING
-                   | "(" expression ")"
-                   | IDENTIFIER ;
+    primary        → "true" | "false" | "nil" | "this"
+                   | NUMBER | STRING | IDENTIFIER | "(" expression ")"
+                   | "super" "." IDENTIFIER ;
 
 *****************************************************************/
 impl Parser {
@@ -450,6 +449,14 @@ impl Parser {
 
         if self.munch(&[TokenType::Number, TokenType::String]) {
             return Ok(Expr::Literal(self.previous().literal));
+        }
+
+        if self.munch(&[TokenType::Super]) {
+            let keyword: Token = self.previous();
+            self.consume(TokenType::Dot, "Expect '.' after 'super'.")?;
+            let method: Token =
+                self.consume(TokenType::Identifier, "Expect superclass method name.")?;
+            return Ok(Expr::Super(keyword, method));
         }
 
         if self.munch(&[TokenType::This]) {
