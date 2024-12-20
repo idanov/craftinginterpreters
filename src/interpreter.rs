@@ -1,6 +1,6 @@
 use crate::environment::Environment;
 use crate::expr::Expr;
-use crate::lox_callable::{LoxClass, LoxFunction, NativeFunction, LoxInstance};
+use crate::lox_callable::{LoxCallable, LoxClass, LoxFunction, LoxInstance, NativeFunction};
 use crate::scanner::{Literal as Lit, Token, TokenType as TT};
 use crate::stmt::Stmt;
 use std::cell::RefCell;
@@ -22,7 +22,7 @@ impl Interpreter {
 
         globals.borrow_mut().define(
             "clock",
-            Lit::Callable(Rc::new(NativeFunction::new(
+            Lit::Callable(LoxCallable::NativeFunction(Rc::new(NativeFunction::new(
                 "clock",
                 0,
                 |_, _| {
@@ -32,7 +32,7 @@ impl Interpreter {
 
                     Ok(Lit::Double((duration.as_millis() as f64) / 1000.0))
                 },
-            ))),
+            )))),
         );
 
         Interpreter {
@@ -133,16 +133,21 @@ impl Interpreter {
                 let mut methods: HashMap<String, Rc<LoxFunction>> = HashMap::new();
                 for x in class_methods {
                     if let Stmt::Function(name, params, body) = x {
-                        let method = LoxFunction::new(name.clone(), params.to_vec(), body.to_vec(), self
-                            .environment
-                            .clone(),
-                             name.lexeme == "init",
+                        let method = LoxFunction::new(
+                            name.clone(),
+                            params.to_vec(),
+                            body.to_vec(),
+                            self.environment.clone(),
+                            name.lexeme == "init",
                         );
                         methods.insert(name.lexeme.clone(), Rc::new(method));
                     }
                 }
 
-                let klass = Lit::Callable(Rc::new(LoxClass::new(&name.lexeme, methods)));
+                let klass = Lit::Callable(LoxCallable::LoxClass(Rc::new(LoxClass::new(
+                    &name.lexeme,
+                    methods,
+                ))));
                 self.environment.borrow_mut().assign(name, klass)?;
                 Ok(None)
             }
@@ -153,13 +158,13 @@ impl Interpreter {
             Stmt::Function(name, params, body) => {
                 self.environment.borrow_mut().define(
                     &name.lexeme,
-                    Lit::Callable(Rc::new(LoxFunction::new(
+                    Lit::Callable(LoxCallable::LoxFunction(Rc::new(LoxFunction::new(
                         name.clone(),
                         params.to_vec(),
                         body.to_vec(),
                         self.environment.clone(),
-                        false
-                    ))),
+                        false,
+                    )))),
                 );
                 Ok(None)
             }
@@ -196,9 +201,7 @@ impl Interpreter {
             }
             Stmt::Var(name, Some(initializer)) => {
                 let value = self.evaluate(initializer)?;
-                self.environment
-                    .borrow_mut()
-                    .define(&name.lexeme, value);
+                self.environment.borrow_mut().define(&name.lexeme, value);
                 Ok(None)
             }
         }
@@ -290,16 +293,19 @@ impl Interpreter {
             ))
         }
     }
-    
+
     fn eval_get(&mut self, obj: &Expr, name: &Token) -> Result<Lit, String> {
         let object = self.evaluate(obj)?;
         if let Lit::LoxInstance(inst) = object {
             LoxInstance::get(inst, name)
         } else {
-            Err(format!("[line {}:{}] Only instances have properties.", name.line, name.column))
+            Err(format!(
+                "[line {}:{}] Only instances have properties.",
+                name.line, name.column
+            ))
         }
     }
-    
+
     fn eval_set(&mut self, obj: &Expr, name: &Token, val: &Expr) -> Result<Lit, String> {
         let object = self.evaluate(obj)?;
         if let Lit::LoxInstance(inst) = object {
@@ -307,7 +313,10 @@ impl Interpreter {
             inst.borrow_mut().set(name, value.clone());
             Ok(value)
         } else {
-            Err(format!("[line {}:{}] Only instances have fields.", name.line, name.column))
+            Err(format!(
+                "[line {}:{}] Only instances have fields.",
+                name.line, name.column
+            ))
         }
     }
 

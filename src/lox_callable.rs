@@ -1,6 +1,12 @@
+use std::fmt;
+use std::hash::{Hash, Hasher};
 use std::{
-    cell::RefCell, collections::HashMap, fmt::{Debug, Display}, rc::Rc, ptr
+    cell::RefCell,
+    collections::HashMap,
+    fmt::{Debug, Display},
+    rc::Rc,
 };
+
 use crate::{
     environment::Environment,
     interpreter::Interpreter,
@@ -8,15 +14,52 @@ use crate::{
     stmt::Stmt,
 };
 
-pub trait LoxCallable: Display + Debug {
-    fn call(&self, interpreter: &mut Interpreter, arguments: &[Literal])
-        -> Result<Literal, String>;
-    fn arity(&self) -> usize;
+#[derive(Debug, Clone, PartialEq)]
+pub enum LoxCallable {
+    NativeFunction(Rc<NativeFunction>),
+    LoxFunction(Rc<LoxFunction>),
+    LoxClass(Rc<LoxClass>),
 }
 
-impl PartialEq for dyn LoxCallable {
-    fn eq(&self, other: &Self) -> bool {
-        ptr::eq(self as *const Self, other as *const Self)
+impl Hash for LoxCallable {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        match self {
+            LoxCallable::NativeFunction(rc) => Rc::as_ptr(rc).hash(state),
+            LoxCallable::LoxFunction(rc) => Rc::as_ptr(rc).hash(state),
+            LoxCallable::LoxClass(rc) => Rc::as_ptr(rc).hash(state),
+        }
+    }
+}
+
+impl fmt::Display for LoxCallable {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            LoxCallable::NativeFunction(rc) => write!(f, "{}", rc),
+            LoxCallable::LoxFunction(rc) => write!(f, "{}", rc),
+            LoxCallable::LoxClass(rc) => write!(f, "{}", rc),
+        }
+    }
+}
+
+impl LoxCallable {
+    pub fn call(
+        &self,
+        interpreter: &mut Interpreter,
+        arguments: &[Literal],
+    ) -> Result<Literal, String> {
+        match self {
+            LoxCallable::NativeFunction(func) => func.call(interpreter, arguments),
+            LoxCallable::LoxFunction(func) => func.call(interpreter, arguments),
+            LoxCallable::LoxClass(class) => class.call(interpreter, arguments),
+        }
+    }
+
+    pub fn arity(&self) -> usize {
+        match self {
+            LoxCallable::NativeFunction(func) => func.arity(),
+            LoxCallable::LoxFunction(func) => func.arity(),
+            LoxCallable::LoxClass(class) => class.arity(),
+        }
     }
 }
 
@@ -39,8 +82,6 @@ impl NativeFunction {
             callable,
         }
     }
-}
-impl LoxCallable for NativeFunction {
     fn call(
         &self,
         interpreter: &mut Interpreter,
@@ -54,7 +95,7 @@ impl LoxCallable for NativeFunction {
     }
 }
 impl Display for NativeFunction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "<native fn {}>", self.name)
     }
 }
@@ -87,12 +128,17 @@ impl LoxFunction {
 
     pub fn bind(&self, instance: Rc<RefCell<LoxInstance>>) -> Rc<LoxFunction> {
         let environment = Environment::nested(self.closure.clone());
-        environment.borrow_mut().define("this", Literal::LoxInstance(Rc::clone(&instance)));
-        Rc::new(LoxFunction::new(self.name.clone(), self.params.to_vec(), self.body.to_vec(),
-        environment, self.is_initializer))
+        environment
+            .borrow_mut()
+            .define("this", Literal::LoxInstance(Rc::clone(&instance)));
+        Rc::new(LoxFunction::new(
+            self.name.clone(),
+            self.params.to_vec(),
+            self.body.to_vec(),
+            environment,
+            self.is_initializer,
+        ))
     }
-}
-impl LoxCallable for LoxFunction {
     fn call(
         &self,
         interpreter: &mut Interpreter,
@@ -101,9 +147,7 @@ impl LoxCallable for LoxFunction {
         let environment = Environment::nested(self.closure.clone());
         let it = self.params.iter().zip(arguments.iter());
         for (param, arg) in it {
-            environment
-                .borrow_mut()
-                .define(&param.lexeme, arg.clone());
+            environment.borrow_mut().define(&param.lexeme, arg.clone());
         }
         let res: Option<Literal> = interpreter.execute_block(&self.body, environment)?;
         if self.is_initializer {
@@ -118,7 +162,7 @@ impl LoxCallable for LoxFunction {
     }
 }
 impl Display for LoxFunction {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "<fn {}>", self.name.lexeme)
     }
 }
@@ -131,14 +175,15 @@ pub struct LoxClass {
 
 impl LoxClass {
     pub fn new(name: &str, methods: HashMap<String, Rc<LoxFunction>>) -> Self {
-        Self { name: name.into(), methods }
+        Self {
+            name: name.into(),
+            methods,
+        }
     }
 
     pub fn find_method(&self, name: &str) -> Option<Rc<LoxFunction>> {
         self.methods.get(name).cloned()
     }
-}
-impl LoxCallable for LoxClass {
     fn call(
         &self,
         interpreter: &mut Interpreter,
@@ -161,7 +206,7 @@ impl LoxCallable for LoxClass {
 }
 
 impl Display for LoxClass {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "<class {}>", self.name)
     }
 }
@@ -169,22 +214,32 @@ impl Display for LoxClass {
 #[derive(Debug, PartialEq, Clone)]
 pub struct LoxInstance {
     klass: Rc<LoxClass>,
-    fields: HashMap<String, Literal>
-
+    fields: HashMap<String, Literal>,
 }
 
 impl LoxInstance {
     pub fn new(klass: Rc<LoxClass>) -> Self {
-        Self { klass, fields: HashMap::new()}
+        Self {
+            klass,
+            fields: HashMap::new(),
+        }
     }
     pub fn get(obj: Rc<RefCell<Self>>, name: &Token) -> Result<Literal, String> {
-        let lambda = || {obj.borrow().klass.find_method(&name.lexeme)
-            .map(|x| Literal::Callable(x.bind(Rc::clone(&obj))))};
-        obj.borrow().fields
+        let lambda = || {
+            obj.borrow()
+                .klass
+                .find_method(&name.lexeme)
+                .map(|x| Literal::Callable(LoxCallable::LoxFunction(x.bind(Rc::clone(&obj)))))
+        };
+        obj.borrow()
+            .fields
             .get(&name.lexeme)
             .cloned()
             .or_else(lambda)
-            .ok_or(format!("[line {}:{}] Undefined property '{}'.", name.line, name.column, name.lexeme))
+            .ok_or(format!(
+                "[line {}:{}] Undefined property '{}'.",
+                name.line, name.column, name.lexeme
+            ))
     }
 
     pub fn set(&mut self, name: &Token, val: Literal) {
@@ -193,7 +248,7 @@ impl LoxInstance {
 }
 
 impl Display for LoxInstance {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "{} instance", self.klass)
     }
 }

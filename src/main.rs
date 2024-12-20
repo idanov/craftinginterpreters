@@ -78,11 +78,7 @@ impl Lox {
             println!("{:?}", token);
         }
         println!("-------- Parser results ------");
-        let tokens = raw_tokens
-            .iter()
-            .flatten()
-            .cloned()
-            .collect::<Vec<_>>();
+        let tokens = raw_tokens.iter().flatten().cloned().collect::<Vec<_>>();
         let mut parser = Parser::new(tokens);
         let parsed: Result<Vec<Stmt>, String> = parser.parse();
 
@@ -105,7 +101,6 @@ impl Lox {
                 eprintln!("{}", e.red());
             };
         }
-
     }
 
     // fn error(line: usize, message: String) {

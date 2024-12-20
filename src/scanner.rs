@@ -9,7 +9,7 @@ use std::hash::{Hash, Hasher};
 use std::rc::Rc;
 use std::str::Chars;
 
-use crate::lox_callable::{LoxInstance, LoxCallable};
+use crate::lox_callable::{LoxCallable, LoxInstance};
 
 #[derive(Debug, Copy, Clone, PartialEq)]
 pub enum TokenType {
@@ -67,7 +67,7 @@ pub enum Literal {
     Double(f64),
     String(String),
     Boolean(bool),
-    Callable(Rc<dyn LoxCallable>),
+    Callable(LoxCallable),
     LoxInstance(Rc<RefCell<LoxInstance>>),
     None,
 }
@@ -78,7 +78,7 @@ impl PartialEq for Literal {
             (Literal::Double(a), Literal::Double(b)) => a == b,
             (Literal::String(a), Literal::String(b)) => a == b,
             (Literal::Boolean(a), Literal::Boolean(b)) => a == b,
-            (Literal::Callable(a), Literal::Callable(b)) => Rc::ptr_eq(a, b),
+            (Literal::Callable(a), Literal::Callable(b)) => a == b,
             (Literal::LoxInstance(a), Literal::LoxInstance(b)) => Rc::ptr_eq(a, b),
             (Literal::None, Literal::None) => true,
             _ => false,
@@ -92,7 +92,7 @@ impl Hash for Literal {
             Literal::Double(float) => float.to_bits().hash(state),
             Literal::String(string) => string.hash(state),
             Literal::Boolean(boolean) => boolean.hash(state),
-            Literal::Callable(callable) => Rc::as_ptr(callable).hash(state),
+            Literal::Callable(callable) => callable.hash(state),
             Literal::LoxInstance(instance) => Rc::as_ptr(instance).hash(state),
             Literal::None => 0.hash(state),
         }
@@ -217,9 +217,7 @@ impl<'a> Scanner<'a> {
             Some(x @ '=') => self.add_token(TokenType::Equal, x.into()),
             Some('<') if self.munch('=') => self.add_token(TokenType::LessEqual, "<=".into()),
             Some(x @ '<') => self.add_token(TokenType::Less, x.into()),
-            Some('>') if self.munch('=') => {
-                self.add_token(TokenType::GreaterEqual, ">=".into())
-            }
+            Some('>') if self.munch('=') => self.add_token(TokenType::GreaterEqual, ">=".into()),
             Some(x @ '>') => self.add_token(TokenType::Greater, x.into()),
 
             Some('/') if self.munch('/') => {

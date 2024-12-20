@@ -62,11 +62,15 @@ impl Resolver {
                 self.define(name)?;
 
                 self.begin_scope();
-                self.scopes.last_mut().map(|x| x.insert("this".to_string(), true) );
+                self.scopes
+                    .last_mut()
+                    .map(|x| x.insert("this".to_string(), true));
 
                 for method in methods {
                     let declaration = match method {
-                        Stmt::Function(method_token, _, _) if method_token.lexeme == "init" => FunctionType::Initializer,
+                        Stmt::Function(method_token, _, _) if method_token.lexeme == "init" => {
+                            FunctionType::Initializer
+                        }
                         _ => FunctionType::Method,
                     };
                     self.resolve_function(method, declaration)?;
@@ -100,18 +104,17 @@ impl Resolver {
             }
             Stmt::Print(expr) => self.resolve_expr(expr),
             Stmt::Return(keyword, expr) => match self.current_function {
-                FunctionType::None =>
-                    Parser::error::<()>(
-                        keyword.clone(),
-                        "Can't return from top-level code.",
-                    ),
-                FunctionType::Initializer if !matches!(expr, Expr::Literal(Literal::None)) =>
+                FunctionType::None => {
+                    Parser::error::<()>(keyword.clone(), "Can't return from top-level code.")
+                }
+                FunctionType::Initializer if !matches!(expr, Expr::Literal(Literal::None)) => {
                     Parser::error::<()>(
                         keyword.clone(),
                         "Can't return a value from an initializer.",
-                    ),
-                _ => self.resolve_expr(expr)
-            }
+                    )
+                }
+                _ => self.resolve_expr(expr),
+            },
             Stmt::While(condition, body) => {
                 self.resolve_expr(condition)?;
                 self.resolve_stmt(body)
@@ -152,7 +155,7 @@ impl Resolver {
                 self.resolve_expr(val)?;
                 self.resolve_expr(obj)?;
                 Ok(())
-            },
+            }
             Expr::This(keyword) => {
                 if self.current_class == ClassType::None {
                     Parser::error::<()>(keyword.clone(), "Can't use 'this' outside of a class.")
@@ -160,7 +163,7 @@ impl Resolver {
                     self.resolve_local(expr, keyword);
                     Ok(())
                 }
-            },
+            }
             Expr::Grouping(expr) => self.resolve_expr(expr),
             Expr::Literal(_) => Ok(()),
             Expr::Logical(left, _, right) => {

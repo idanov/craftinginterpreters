@@ -539,8 +539,7 @@ impl Parser {
     }
 
     fn peek(&mut self) -> Token {
-        self
-            .tokens
+        self.tokens
             .peek()
             .expect("No more tokens to be processed")
             .clone()

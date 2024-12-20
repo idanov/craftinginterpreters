@@ -27,8 +27,7 @@ impl Environment {
     }
 
     pub fn get(&self, key: &Token) -> Result<Literal, String> {
-        self
-            .values
+        self.values
             .get(&key.lexeme)
             .cloned()
             .or_else(|| {
@@ -45,7 +44,10 @@ impl Environment {
         } else {
             self.values.get(name).cloned()
         }
-        .ok_or(format!("Undefined variable '{}' at distance {}.", name, distance))
+        .ok_or(format!(
+            "Undefined variable '{}' at distance {}.",
+            name, distance
+        ))
     }
 
     pub fn assign_at(
