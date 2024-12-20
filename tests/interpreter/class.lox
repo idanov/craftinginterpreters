@@ -143,3 +143,13 @@ class B < A {
 class C < B {}
 
 C().test();
+
+// The resolver should complain about those when uncommented
+// super.notEvenInAClass();
+
+class Eclair {
+  cook() {
+//    super.cook();
+    print "Pipe full of crème pâtissière.";
+  }
+}

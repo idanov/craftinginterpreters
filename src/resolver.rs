@@ -20,6 +20,7 @@ enum FunctionType {
 enum ClassType {
     None,
     Class,
+    SubClass,
 }
 
 pub struct Resolver {
@@ -67,6 +68,7 @@ impl Resolver {
                     return Parser::error::<()>(name.clone(), "A class can't inherit from itself.");
                 }
                 if let Some(parent) = superclass {
+                    self.current_class = ClassType::SubClass;
                     self.resolve_expr(parent)?;
                 }
 
@@ -177,8 +179,14 @@ impl Resolver {
                 Ok(())
             }
             Expr::Super(keyword, _) => {
-                self.resolve_local(expr, keyword);
-                Ok(())
+                if self.current_class == ClassType::None {
+                    Parser::error::<()>(keyword.clone(), "Can't use 'super' outside of a class.")
+                } else if self.current_class != ClassType::SubClass {
+                    Parser::error::<()>(keyword.clone(), "Can't use 'super' in a class with no superclass.")
+                } else {
+                    self.resolve_local(expr, keyword);
+                    Ok(())
+                }
             },
             Expr::This(keyword) => {
                 if self.current_class == ClassType::None {
