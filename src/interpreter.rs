@@ -230,7 +230,11 @@ impl Interpreter {
             }
             Stmt::Print(expr) => {
                 let value = self.evaluate(expr)?;
-                println!("{}", value);
+                if let Lit::String(val) = value {
+                    println!("{}", val);
+                } else {
+                    println!("{}", value);
+                }
                 Ok(None)
             }
             Stmt::Return(_, value) => Ok(Some(self.evaluate(value)?)),
