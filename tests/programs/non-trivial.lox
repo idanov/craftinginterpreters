@@ -1,0 +1,43 @@
+// Define a base class for math operations.
+class MathOperation {
+  execute(n) {
+    return n; // Default behavior is to return the input.
+  }
+}
+
+// Define a subclass for factorial calculation.
+class Factorial < MathOperation {
+  execute(n) {
+    if (n <= 1) {
+      return 1; // Base case for factorial.
+    } else {
+      return n * this.execute(n - 1); // Recursive case.
+    }
+  }
+}
+
+// Instantiate the Factorial class.
+var factCalc = Factorial();
+
+// A utility function to print a separator line.
+fun printSeparator() {
+  print "--------------------";
+}
+
+// A function to test the factorial calculation.
+fun testFactorial(n) {
+  print "Calculating factorial of " + n + ":";
+  var result = factCalc.execute(n);
+  print "Result: " + result;
+  printSeparator();
+}
+
+// Test cases for factorial calculation.
+printSeparator();
+testFactorial(5); // Expected: 120
+testFactorial(0); // Expected: 1
+testFactorial(10); // Expected: 3628800
+
+// Show that the base class can also be used.
+var baseCalc = MathOperation();
+print "Base class execute(7): " + baseCalc.execute(7); // Expected: 7
