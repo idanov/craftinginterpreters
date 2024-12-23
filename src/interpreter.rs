@@ -283,7 +283,13 @@ impl Interpreter {
             )),
             (Lit::Double(lhs), TT::Plus, Lit::Double(rhs)) => Ok(Lit::Double(lhs + rhs)),
             (Lit::String(lhs), TT::Plus, Lit::String(rhs)) => {
-                Ok(Lit::String(lhs.to_string() + rhs))
+                Ok(Lit::String(format!("{}{}", lhs, rhs)))
+            }
+            (Lit::String(lhs), TT::Plus, Lit::Double(rhs)) => {
+                Ok(Lit::String(format!("{}{}", lhs, rhs)))
+            }
+            (Lit::Double(lhs), TT::Plus, Lit::String(rhs)) => {
+                Ok(Lit::String(format!("{}{}", lhs, rhs)))
             }
             (_, TT::Plus, _) => Err(format!(
                 "[line {}:{}] Operands must be numbers.",
