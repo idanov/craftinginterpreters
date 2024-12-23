@@ -1,9 +1,9 @@
 use crate::expr::Expr;
 use crate::scanner::{Literal, Token, TokenType};
 use crate::stmt::Stmt;
-use colored::Colorize;
 use itertools::peek_nth;
 use itertools::structs::PeekNth;
+use log::debug;
 use std::vec::IntoIter;
 
 pub struct Parser {
@@ -81,17 +81,28 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
         let mut statements: Vec<Stmt> = Vec::new();
+        let mut errors: Vec<String> = Vec::new();
         while !self.is_at_end() {
             let stmt = self.declaration();
-            println!("{}", format!("Debug {:?}", stmt).dimmed());
-            if let Ok(x) = stmt {
-                statements.push(x);
-            } else {
-                self.synchronize();
+            debug!("{}", format!("Debug {:?}", stmt));
+            match stmt {
+                Ok(x) => statements.push(x),
+                Err(e) => {
+                    errors.push(e);
+                    self.synchronize();
+                }
             }
         }
 
-        Ok(statements)
+        if errors.is_empty() {
+            Ok(statements)
+        } else {
+            Err(errors
+                .iter()
+                .map(|s| s.to_string())
+                .collect::<Vec<_>>()
+                .join("\n"))
+        }
     }
 
     fn declaration(&mut self) -> Result<Stmt, String> {
@@ -481,7 +492,7 @@ impl Parser {
             return Ok(self.advance());
         }
         let prev = self.previous();
-        let msg = format!("{}. Last valid lexeme was {}.", message, prev.lexeme);
+        let msg = format!("{} Last valid lexeme was {}.", message, prev.lexeme);
         Parser::error::<Token>(&self.peek(), &msg)
     }
 

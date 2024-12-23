@@ -1,3 +1,4 @@
+use log::debug;
 use std::cell::RefCell;
 use std::env;
 use std::fs;
@@ -34,13 +35,12 @@ impl Lox {
         }
     }
 
-    pub fn run_file(&mut self, filename: &str) {
+    pub fn run_file(&mut self, filename: &str) -> i32 {
         let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
-        self.run(&contents);
-        // if had_error {
-        //     exit(65);
-        // }
-        // if (hadRuntimeError) System.exit(70);
+        match self.run(&contents) {
+            Ok(()) => 0,
+            Err(err) => err,
+        }
     }
 
     pub fn run_prompt(&mut self) {
@@ -50,7 +50,7 @@ impl Lox {
             match readline {
                 Ok(line) => {
                     let _ = rl.add_history_entry(line.as_str());
-                    self.run(&line);
+                    let _ = self.run(&line);
                 }
                 Err(ReadlineError::Interrupted) => {
                     println!("^C");
@@ -65,59 +65,54 @@ impl Lox {
                     break;
                 }
             }
-            // had_error = false;
         }
     }
 
-    pub fn run(&mut self, source: &str) {
+    pub fn run(&mut self, source: &str) -> Result<(), i32> {
         // scan tokens and print them
         let mut scan = scanner::Scanner::new(source);
         let raw_tokens = scan.scan_tokens();
-        println!("-------- Scanner results ------");
+        debug!("-------- Scanner results ------");
         for token in raw_tokens {
-            println!("{:?}", token);
+            debug!("{:?}", token);
         }
-        println!("-------- Parser results ------");
+        debug!("-------- Parser results ------");
         let tokens = raw_tokens.iter().flatten().cloned().collect::<Vec<_>>();
         let mut parser = Parser::new(tokens);
         let parsed: Result<Vec<Stmt>, String> = parser.parse();
 
         if let Err(e) = &parsed {
             eprintln!("{}", e.red());
+            return Err(65);
         }
 
         let statements: Vec<Stmt> = parsed.unwrap_or_default();
         for x in &statements {
-            println!("{}", x);
+            debug!("{}", x);
         }
 
-        println!("-------- Resolver results ------");
+        debug!("-------- Resolver results ------");
         let mut resolver = Resolver::new(self.interpreter.clone());
         if let Err(e) = resolver.resolve(&statements) {
             eprintln!("{}", e.red());
-        } else {
-            println!("-------- Interpreter results ------");
-            if let Err(e) = self.interpreter.borrow_mut().interpret(&statements) {
-                eprintln!("{}", e.red());
-            };
+            return Err(65);
         }
+        debug!("-------- Interpreter results ------");
+        if let Err(e) = self.interpreter.borrow_mut().interpret(&statements) {
+            eprintln!("{}", e.red());
+            return Err(70);
+        };
+        Ok(())
     }
-
-    // fn error(line: usize, message: String) {
-    //     report(line, "".to_string(), message);
-    // }
-
-    // fn report(line: usize, where_str: String, message: String) {
-    //     eprintln!("[line {}] Error{}: {}", line, where_str, message);
-    // }
 }
 
 fn main() {
+    env_logger::init();
     let args: Vec<String> = env::args().collect();
     let mut lox = Lox::new();
     match args.len() {
         1 => lox.run_prompt(),
-        2 => lox.run_file(&args[1]),
+        2 => exit(lox.run_file(&args[1])),
         _ => {
             println!("Usage: craft [script]");
             exit(64);

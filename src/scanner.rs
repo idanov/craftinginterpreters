@@ -136,7 +136,7 @@ pub struct Scanner<'a> {
     keywords: HashMap<&'a str, TokenType>,
 }
 
-impl<'a> Scanner<'a> {
+impl Scanner<'_> {
     pub fn new(source: &str) -> Scanner {
         let keywords: HashMap<&str, TokenType> = [
             ("and", TokenType::And),
