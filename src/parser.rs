@@ -79,6 +79,10 @@ impl Parser {
         }
     }
 
+    pub fn parse_expr(&mut self) -> Result<Expr, String> {
+        self.expression()
+    }
+
     pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
         let mut statements: Vec<Stmt> = Vec::new();
         let mut errors: Vec<String> = Vec::new();

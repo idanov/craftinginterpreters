@@ -79,6 +79,10 @@ impl Lox {
         debug!("-------- Parser results ------");
         let tokens = raw_tokens.iter().flatten().cloned().collect::<Vec<_>>();
         let mut parser = Parser::new(tokens);
+        if let Ok(expr) = parser.parse_expr() {
+            let res = self.interpreter.borrow_mut().evaluate(&expr);
+            return res.map(|val| println!("{}", val)).map_err(|_| 70);
+        }
         let parsed: Result<Vec<Stmt>, String> = parser.parse();
 
         if let Err(e) = &parsed {
