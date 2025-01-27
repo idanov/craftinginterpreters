@@ -508,7 +508,7 @@ impl Parser {
             ))
         } else {
             Err(format!(
-                "[line {}:{}] Error at {}: {}",
+                "[line {}:{}] Error at '{}': {}",
                 token.line, token.column, token.lexeme, message
             ))
         }

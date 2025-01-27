@@ -162,7 +162,7 @@ mod tests {
     
     fn expected_error_at(path: &Path) -> String {
         let contents = fs::read_to_string(path).unwrap();
-        let re = Regex::new(r"// .* Error at .*").unwrap();
+        let re = Regex::new(r"//.* Error at .*").unwrap();
     
         let expected: String = contents
             .lines()
@@ -183,12 +183,12 @@ mod tests {
         let successful = expected(&path);
         let runtime_error = expected_runtime_error(&path);
         let error = expected_error_at(&path);
-        if successful.len() > 0 {
-            cmd.arg(&path).assert().success().stdout(successful);
-        } else if runtime_error.len() > 0 {
-            cmd.arg(&path).assert().failure().stderr(runtime_error);
+        if runtime_error.len() > 0 {
+            cmd.arg(&path).assert().failure().code(70).stderr(runtime_error);
+        } else if error.len() > 0 {
+            cmd.arg(&path).assert().failure().code(65).stderr(error);
         } else {
-            cmd.arg(&path).assert().failure().stderr(error);
-        } 
+            cmd.arg(&path).assert().success().stdout(successful);
+        }
     }
 }
