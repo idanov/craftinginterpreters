@@ -124,3 +124,71 @@ fn main() {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use assert_cmd::Command;
+    use rstest::*;
+    use regex::Regex;
+    use std::fs;
+    use std::path::{Path, PathBuf};
+
+    fn expected(path: &Path) -> String {
+        let contents = fs::read_to_string(path).unwrap();
+
+        let expected: String = contents
+            .lines()
+            .filter(|line| line.contains("// expect: "))
+            .map(|line| line.split("// expect: ").nth(1).unwrap().to_string() + "\n")
+            .collect();
+        expected
+    }
+    fn expected_runtime_error(path: &Path) -> String {
+        let contents = fs::read_to_string(path).unwrap();
+
+        let expected: String = contents
+            .lines()
+            .filter(|line| line.contains("// expect runtime error: "))
+            .map(|line| {
+                line.split("// expect runtime error: ")
+                    .nth(1)
+                    .unwrap()
+                    .to_string()
+                    + "\n"
+            })
+            .collect();
+        expected
+    }
+    
+    fn expected_error_at(path: &Path) -> String {
+        let contents = fs::read_to_string(path).unwrap();
+        let re = Regex::new(r"// .* Error at .*").unwrap();
+    
+        let expected: String = contents
+            .lines()
+            .filter(|line| re.is_match(line))
+            .map(|line| line.split("// ").nth(1).unwrap().to_string() + "\n")
+            .collect();
+        expected
+    }
+
+    #[rstest]
+    #[trace]
+    fn test_something(
+        #[files("test/**/*.lox")]
+        #[exclude("test/benchmark")]
+        path: PathBuf,
+    ) {
+        let mut cmd = Command::cargo_bin("rjlox").unwrap();
+        let successful = expected(&path);
+        let runtime_error = expected_runtime_error(&path);
+        let error = expected_error_at(&path);
+        if successful.len() > 0 {
+            cmd.arg(&path).assert().success().stdout(successful);
+        } else if runtime_error.len() > 0 {
+            cmd.arg(&path).assert().failure().stderr(runtime_error);
+        } else {
+            cmd.arg(&path).assert().failure().stderr(error);
+        } 
+    }
+}
