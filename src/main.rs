@@ -36,7 +36,8 @@ impl Lox {
     }
 
     pub fn run_file(&mut self, filename: &str) -> i32 {
-        let contents = fs::read_to_string(filename).expect("Something went wrong reading the file");
+        let contents =
+            fs::read_to_string(filename).expect("Something went wrong reading the file...");
         match self.run(&contents) {
             Ok(()) => 0,
             Err(err) => err,
@@ -44,7 +45,7 @@ impl Lox {
     }
 
     pub fn run_prompt(&mut self) {
-        let mut rl = DefaultEditor::new().expect("Something went wrong with starting rustyline");
+        let mut rl = DefaultEditor::new().expect("Something went wrong with starting rustyline...");
         loop {
             let readline = rl.readline(">>> ");
             match readline {
@@ -118,7 +119,7 @@ fn main() {
         1 => lox.run_prompt(),
         2 => exit(lox.run_file(&args[1])),
         _ => {
-            println!("Usage: craft [script]");
+            println!("Usage: rjlox [script]");
             exit(64);
         }
     }

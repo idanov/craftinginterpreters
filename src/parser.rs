@@ -572,14 +572,14 @@ impl Parser {
     fn peek(&mut self) -> Token {
         self.tokens
             .peek()
-            .expect("No more tokens to be processed")
+            .expect("No more tokens to be processed...")
             .clone()
     }
 
     fn previous(&mut self) -> Token {
         self.prev
             .clone()
-            .expect("No previous token to be processed")
+            .expect("No previous token to be processed...")
             .clone()
     }
 }
