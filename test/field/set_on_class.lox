@@ -1,2 +1,2 @@
 class Foo {}
-Foo.bar = "value"; // expect runtime error: Only instances have fields.
+Foo.bar = "value"; // expect runtime error: [line 2:5] Only instances have fields.

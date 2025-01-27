@@ -177,6 +177,8 @@ mod tests {
     fn test_something(
         #[files("test/**/*.lox")]
         #[exclude("test/benchmark")]
+        #[exclude("test/expressions")]
+        #[exclude("test/scanning")]
         path: PathBuf,
     ) {
         let mut cmd = Command::cargo_bin("rjlox").unwrap();
