@@ -4,7 +4,7 @@ class A {
 
 class B < A {
   method() {
-    // [line 8:11] Error at ')': Expect '.' after 'super'.
+    // [line 8:11] Error at ')': Expect '.' after 'super'. Last valid lexeme was 'super' at [line 8:6].
     (super).method();
   }
 }

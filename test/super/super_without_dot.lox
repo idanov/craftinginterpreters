@@ -2,7 +2,7 @@ class A {}
 
 class B < A {
   method() {
-    // [line 6:10] Error at ';': Expect '.' after 'super'.
+    // [line 6:10] Error at ';': Expect '.' after 'super'. Last valid lexeme was 'super' at [line 6:5].
     super;
   }
 }

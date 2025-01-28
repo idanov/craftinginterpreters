@@ -496,7 +496,7 @@ impl Parser {
             return Ok(self.advance());
         }
         let prev = self.previous();
-        let msg = format!("{} Last valid lexeme was {}.", message, prev.lexeme);
+        let msg = format!("{} Last valid lexeme was '{}' at [line {}:{}].", message, prev.lexeme, prev.line, prev.column);
         Parser::error::<Token>(&self.peek(), &msg)
     }
 

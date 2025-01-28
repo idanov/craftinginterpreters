@@ -1,2 +1,2 @@
-// [line 2:5] Error at 'nil': Expect variable name.
+// [line 2:5] Error at 'nil': Expect variable name. Last valid lexeme was 'var' at [line 2:1].
 var nil = "value";

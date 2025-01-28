@@ -1,4 +1,4 @@
 class Foo {}
 
-// [line 4:13] Error at '(': Expect superclass name.
+// [line 4:13] Error at '(': Expect superclass name. Last valid lexeme was '<' at [line 4:11].
 class Bar < (Foo) {}
