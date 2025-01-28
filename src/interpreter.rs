@@ -412,6 +412,7 @@ impl Interpreter {
 
     fn is_equal(left: &Lit, right: &Lit) -> bool {
         match (left, right) {
+            (Lit::Boolean(a), Lit::Boolean(b)) => a == b,
             (Lit::String(a), Lit::String(b)) => a == b,
             (Lit::Double(a), Lit::Double(b)) => a == b,
             (Lit::None, Lit::None) => true,
