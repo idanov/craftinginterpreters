@@ -211,13 +211,13 @@ impl Scanner<'_> {
             Some(x @ ';') => self.add_token(TokenType::Semicolon, x.into()),
             Some(x @ '*') => self.add_token(TokenType::Star, x.into()),
 
-            Some('!') if self.munch('=') => self.add_token(TokenType::BangEqual, "!=".into()),
+            Some('!') if self.munch('=') => self.add_munched_token(TokenType::BangEqual, "!=".into()),
             Some(x @ '!') => self.add_token(TokenType::Bang, x.into()),
-            Some('=') if self.munch('=') => self.add_token(TokenType::EqualEqual, "==".into()),
+            Some('=') if self.munch('=') => self.add_munched_token(TokenType::EqualEqual, "==".into()),
             Some(x @ '=') => self.add_token(TokenType::Equal, x.into()),
-            Some('<') if self.munch('=') => self.add_token(TokenType::LessEqual, "<=".into()),
+            Some('<') if self.munch('=') => self.add_munched_token(TokenType::LessEqual, "<=".into()),
             Some(x @ '<') => self.add_token(TokenType::Less, x.into()),
-            Some('>') if self.munch('=') => self.add_token(TokenType::GreaterEqual, ">=".into()),
+            Some('>') if self.munch('=') => self.add_munched_token(TokenType::GreaterEqual, ">=".into()),
             Some(x @ '>') => self.add_token(TokenType::Greater, x.into()),
 
             Some('/') if self.munch('/') => {
@@ -299,6 +299,17 @@ impl Scanner<'_> {
             literal: Literal::None,
             line: self.line,
             column: self.current,
+        }));
+    }
+
+    fn add_munched_token(&mut self, token: TokenType, lexeme: String) {
+        let offset = lexeme.len() - 1;
+        self.tokens.push(Ok(Token {
+            token,
+            lexeme,
+            literal: Literal::None,
+            line: self.line,
+            column: self.current - offset,
         }));
     }
 
