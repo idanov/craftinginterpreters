@@ -35,7 +35,7 @@ impl Environment {
                     .as_ref()
                     .and_then(|x| x.borrow().get(key).ok())
             })
-            .ok_or(format!("Undefined variable '{}'.", key.lexeme))
+            .ok_or(format!("[line {}:{}] Undefined variable '{}'.", key.line, key.column, key.lexeme))
     }
 
     pub fn get_at(&self, distance: usize, name: &str) -> Result<Literal, String> {

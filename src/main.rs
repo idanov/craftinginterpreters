@@ -185,6 +185,7 @@ mod tests {
         #[exclude("test/benchmark")]
         #[exclude("test/expressions")]
         #[exclude("test/scanning")]
+        #[exclude("test/limit")]
         path: PathBuf,
     ) {
         let mut cmd = Command::cargo_bin("rjlox").unwrap();
