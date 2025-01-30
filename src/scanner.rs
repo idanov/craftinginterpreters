@@ -237,13 +237,17 @@ impl Scanner<'_> {
                 let mut count = self.current;
                 let res: String = self
                     .chars
-                    .take_while_ref(|&x| {
-                        count += 1;
-                        if x == '\n' {
+                    .take_while_ref(|&x| match x {
+                        '"' => false,
+                        '\n' => {
                             lines += 1;
                             count = 0;
-                        };
-                        x != '"'
+                            true
+                        }
+                        _ => {
+                            count += 1;
+                            true
+                        }
                     })
                     .collect();
                 if self.chars.peek().is_none() {
