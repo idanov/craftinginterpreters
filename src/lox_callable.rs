@@ -14,11 +14,22 @@ use crate::{
     stmt::Stmt,
 };
 
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone)]
 pub enum LoxCallable {
     NativeFunction(Rc<NativeFunction>),
     LoxFunction(Rc<LoxFunction>),
     LoxClass(Rc<LoxClass>),
+}
+
+impl PartialEq for LoxCallable {
+    fn eq(&self, other: &Self) -> bool {
+        match (self, other) {
+            (Self::NativeFunction(a), Self::NativeFunction(b)) => Rc::ptr_eq(a, b),
+            (Self::LoxFunction(a), Self::LoxFunction(b)) => Rc::ptr_eq(a, b),
+            (Self::LoxClass(a), Self::LoxClass(b)) => Rc::ptr_eq(a, b),
+            _ => false,
+        }
+    }
 }
 
 impl Hash for LoxCallable {

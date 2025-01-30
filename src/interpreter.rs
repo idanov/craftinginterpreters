@@ -417,6 +417,8 @@ impl Interpreter {
             (Lit::Double(a), Lit::Double(b)) => a == b,
             (Lit::None, Lit::None) => true,
             (Lit::None, _) => false,
+            (Lit::Callable(a), Lit::Callable(b)) => a == b,
+            (Lit::LoxInstance(a), Lit::LoxInstance(b)) => a == b,
             (_, _) => false,
         }
     }
