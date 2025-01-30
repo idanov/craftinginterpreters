@@ -292,7 +292,7 @@ impl Interpreter {
                 Ok(Lit::String(format!("{}{}", lhs, rhs)))
             }
             (_, TT::Plus, _) => Err(format!(
-                "[line {}:{}] Operands must be numbers.",
+                "[line {}:{}] Operands must be two numbers or two strings.",
                 op.line, op.column
             )),
             (Lit::Double(lhs), TT::Greater, Lit::Double(rhs)) => Ok(Lit::Boolean(lhs > rhs)),
