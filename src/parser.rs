@@ -9,6 +9,7 @@ use std::vec::IntoIter;
 pub struct Parser {
     tokens: PeekNth<IntoIter<Token>>,
     prev: Option<Token>,
+    errors: Vec<String>,
 }
 
 /****************************************************************
@@ -76,6 +77,7 @@ impl Parser {
         Parser {
             tokens: peek_nth(tokens),
             prev: None,
+            errors: Vec::new(),
         }
     }
 
@@ -85,23 +87,23 @@ impl Parser {
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
         let mut statements: Vec<Stmt> = Vec::new();
-        let mut errors: Vec<String> = Vec::new();
         while !self.is_at_end() {
             let stmt = self.declaration();
             debug!("{}", format!("Debug {:?}", stmt));
             match stmt {
                 Ok(x) => statements.push(x),
                 Err(e) => {
-                    errors.push(e);
+                    self.errors.push(e);
                     self.synchronize();
                 }
             }
         }
 
-        if errors.is_empty() {
+        if self.errors.is_empty() {
             Ok(statements)
         } else {
-            Err(errors
+            Err(self
+                .errors
                 .iter()
                 .map(|s| s.to_string())
                 .collect::<Vec<_>>()
@@ -305,7 +307,13 @@ impl Parser {
     fn block(&mut self) -> Result<Vec<Stmt>, String> {
         let mut statements: Vec<Stmt> = Vec::new();
         while !self.check(TokenType::RightBrace) && !self.is_at_end() {
-            statements.push(self.declaration()?);
+            match self.declaration() {
+                Ok(stmt) => statements.push(stmt),
+                Err(e) => {
+                    self.errors.push(e);
+                    self.synchronize();
+                }
+            }
         }
 
         self.consume(TokenType::RightBrace, "Expect '}' after block.")?;
