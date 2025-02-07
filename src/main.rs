@@ -180,12 +180,12 @@ mod tests {
 
     #[rstest]
     #[trace]
-    fn test_something(
+    fn test_interpreter(
         #[files("test/**/*.lox")]
-        #[exclude("test/benchmark")]
-        #[exclude("test/expressions")]
-        #[exclude("test/scanning")]
-        #[exclude("test/limit")]
+        #[exclude("test/benchmark")] // this is benchmark tests
+        #[exclude("test/expressions")] // this is for the expressions eval
+        #[exclude("test/scanning")] // this is just for the scanner
+        #[exclude("test/limit")] // this is for the compiler
         path: PathBuf,
     ) {
         let mut cmd = Command::cargo_bin("rjlox").unwrap();
