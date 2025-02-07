@@ -51,7 +51,7 @@ impl Lox {
             match readline {
                 Ok(line) => {
                     let _ = rl.add_history_entry(line.as_str());
-                    let _ = self.run(&line);
+                    let _ = self.run_repl(&line);
                 }
                 Err(ReadlineError::Interrupted) => {
                     println!("^C");
@@ -69,6 +69,36 @@ impl Lox {
         }
     }
 
+    pub fn run_repl(&mut self, source: &str) -> Result<(), i32> {
+        // scan tokens and print them
+        let mut scan = scanner::Scanner::new(source);
+        let raw_tokens = scan.scan_tokens();
+        debug!("-------- Scanner results ------");
+        for token in raw_tokens {
+            debug!("{:?}", token);
+            if let Err(e) = token {
+                eprintln!("{}", e.red());
+            }
+        }
+        debug!("-------- Parser results (expr) ------");
+        let tokens = raw_tokens.iter().flatten().cloned().collect::<Vec<_>>();
+        let mut parser = Parser::new(tokens);
+        if let Ok(expr) = parser.parse_expr() {
+            let res = self.interpreter.borrow_mut().evaluate(&expr);
+            return match res {
+                Ok(val) => {
+                    println!("{}", val);
+                    Ok(())
+                }
+                Err(e) => {
+                    eprintln!("{}", e.red());
+                    Err(70)
+                }
+            };
+        }
+        Err(65)
+    }
+
     pub fn run(&mut self, source: &str) -> Result<(), i32> {
         // scan tokens and print them
         let mut scan = scanner::Scanner::new(source);
@@ -80,20 +110,9 @@ impl Lox {
                 eprintln!("{}", e.red());
             }
         }
-        debug!("-------- Parser results ------");
+        debug!("-------- Parser results (stmt) ------");
         let tokens = raw_tokens.iter().flatten().cloned().collect::<Vec<_>>();
         let mut parser = Parser::new(tokens);
-        if let Ok(expr) = parser.parse_expr() {
-            let res = self.interpreter.borrow_mut().evaluate(&expr);
-            return match res {
-                Ok(val) => Ok(println!("{}", val)),
-                Err(e) => {
-                    eprintln!("{}", e.red());
-                    Err(70)
-                }
-            }
-        }
-        parser.reset();
         let parsed: Result<Vec<Stmt>, String> = parser.parse();
 
         if let Err(e) = &parsed {
@@ -138,8 +157,8 @@ fn main() {
 #[cfg(test)]
 mod tests {
     use assert_cmd::Command;
-    use rstest::*;
     use regex::Regex;
+    use rstest::*;
     use std::fs;
     use std::path::{Path, PathBuf};
 
@@ -169,11 +188,11 @@ mod tests {
             .collect();
         expected
     }
-    
+
     fn expected_error_at(path: &Path) -> String {
         let contents = fs::read_to_string(path).unwrap();
         let re = Regex::new(r"//.* Error.*").unwrap();
-    
+
         let expected: String = contents
             .lines()
             .filter(|line| re.is_match(line))
@@ -197,7 +216,11 @@ mod tests {
         let runtime_error = expected_runtime_error(&path);
         let error = expected_error_at(&path);
         if runtime_error.len() > 0 {
-            cmd.arg(&path).assert().failure().code(70).stderr(runtime_error);
+            cmd.arg(&path)
+                .assert()
+                .failure()
+                .code(70)
+                .stderr(runtime_error);
         } else if error.len() > 0 {
             cmd.arg(&path).assert().failure().code(65).stderr(error);
         } else {

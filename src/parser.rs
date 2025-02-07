@@ -7,7 +7,6 @@ use log::debug;
 use std::vec::IntoIter;
 
 pub struct Parser {
-    source: Vec<Token>,
     tokens: PeekNth<IntoIter<Token>>,
     prev: Option<Token>,
 }
@@ -74,22 +73,14 @@ Parser grammar:
 *****************************************************************/
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
-        let iter = peek_nth(tokens.clone().into_iter());
         Parser {
-            source: tokens,
-            tokens: iter,
+            tokens: peek_nth(tokens),
             prev: None,
         }
     }
 
     pub fn parse_expr(&mut self) -> Result<Expr, String> {
         self.expression()
-    }
-
-    pub fn reset(&mut self) {
-        let iter = peek_nth(self.source.clone().into_iter());
-        self.tokens = iter;
-        self.prev = None;
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
@@ -505,7 +496,10 @@ impl Parser {
             return Ok(self.advance());
         }
         let prev = self.previous();
-        let msg = format!("{} Last valid lexeme was '{}' at [line {}:{}].", message, prev.lexeme, prev.line, prev.column);
+        let msg = format!(
+            "{} Last valid lexeme was '{}' at [line {}:{}].",
+            message, prev.lexeme, prev.line, prev.column
+        );
         Parser::error::<Token>(&self.peek(), &msg)
     }
 
