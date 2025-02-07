@@ -76,6 +76,9 @@ impl Lox {
         debug!("-------- Scanner results ------");
         for token in raw_tokens {
             debug!("{:?}", token);
+            if let Err(e) = token {
+                eprintln!("{}", e.red());
+            }
         }
         debug!("-------- Parser results ------");
         let tokens = raw_tokens.iter().flatten().cloned().collect::<Vec<_>>();
@@ -90,6 +93,7 @@ impl Lox {
                 }
             }
         }
+        parser.reset();
         let parsed: Result<Vec<Stmt>, String> = parser.parse();
 
         if let Err(e) = &parsed {
@@ -168,7 +172,7 @@ mod tests {
     
     fn expected_error_at(path: &Path) -> String {
         let contents = fs::read_to_string(path).unwrap();
-        let re = Regex::new(r"//.* Error at .*").unwrap();
+        let re = Regex::new(r"//.* Error.*").unwrap();
     
         let expected: String = contents
             .lines()

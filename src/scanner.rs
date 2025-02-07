@@ -290,7 +290,7 @@ impl Scanner<'_> {
             }
 
             _ => self.tokens.push(Err(format!(
-                "Error: Unexpected character at line {:?} and column {:?}.",
+                "[line {}:{}] Error: Unexpected character.",
                 self.line, self.current
             ))),
         }

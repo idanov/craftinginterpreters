@@ -7,6 +7,7 @@ use log::debug;
 use std::vec::IntoIter;
 
 pub struct Parser {
+    source: Vec<Token>,
     tokens: PeekNth<IntoIter<Token>>,
     prev: Option<Token>,
 }
@@ -73,14 +74,22 @@ Parser grammar:
 *****************************************************************/
 impl Parser {
     pub fn new(tokens: Vec<Token>) -> Self {
+        let iter = peek_nth(tokens.clone().into_iter());
         Parser {
-            tokens: peek_nth(tokens),
+            source: tokens,
+            tokens: iter,
             prev: None,
         }
     }
 
     pub fn parse_expr(&mut self) -> Result<Expr, String> {
         self.expression()
+    }
+
+    pub fn reset(&mut self) {
+        let iter = peek_nth(self.source.clone().into_iter());
+        self.tokens = iter;
+        self.prev = None;
     }
 
     pub fn parse(&mut self) -> Result<Vec<Stmt>, String> {
