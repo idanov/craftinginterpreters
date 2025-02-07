@@ -252,7 +252,7 @@ impl Scanner<'_> {
                     .collect();
                 if self.chars.peek().is_none() {
                     self.tokens.push(Err(format!(
-                        "Error: Unterminated string at line {:?} and column {:?}.",
+                        "[line {}:{}] Error: Unterminated string.",
                         self.line, self.current
                     )))
                 } else {

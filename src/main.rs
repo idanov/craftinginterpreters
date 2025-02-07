@@ -108,6 +108,7 @@ impl Lox {
             debug!("{:?}", token);
             if let Err(e) = token {
                 eprintln!("{}", e.red());
+                return Err(65);
             }
         }
         debug!("-------- Parser results (stmt) ------");
