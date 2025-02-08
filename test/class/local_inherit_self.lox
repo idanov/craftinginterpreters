@@ -1,4 +1,4 @@
 {
   class Foo < Foo {} // [line 2:9] Error at 'Foo': A class can't inherit from itself.
 }
-// [line 5] Error at end: Expect '}' after block.
+// [c line 5] Error at end: Expect '}' after block.
