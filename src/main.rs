@@ -209,6 +209,7 @@ mod tests {
     #[trace]
     fn test_interpreter(
         #[files("test/**/*.lox")]
+        #[exclude("test/_my")] // this is my custom tests (taken from the book text)
         #[exclude("test/benchmark")] // this is benchmark tests
         #[exclude("test/expressions")] // this is for the expressions eval
         #[exclude("test/scanning")] // this is just for the scanner
