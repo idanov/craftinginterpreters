@@ -100,6 +100,7 @@ impl Lox {
     }
 
     pub fn run(&mut self, source: &str) -> Result<(), i32> {
+        let mut res: Result<(), i32> = Ok(());
         // scan tokens and print them
         let mut scan = scanner::Scanner::new(source);
         let raw_tokens = scan.scan_tokens();
@@ -108,7 +109,7 @@ impl Lox {
             debug!("{:?}", token);
             if let Err(e) = token {
                 eprintln!("{}", e.red());
-                return Err(65);
+                res = Err(65);
             }
         }
         debug!("-------- Parser results (stmt) ------");
@@ -137,7 +138,7 @@ impl Lox {
             eprintln!("{}", e.red());
             return Err(70);
         };
-        Ok(())
+        res
     }
 }
 

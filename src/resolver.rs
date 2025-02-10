@@ -41,10 +41,17 @@ impl Resolver {
     }
 
     pub fn resolve(&mut self, statements: &[Stmt]) -> Result<(), String> {
+        let mut errs: Vec<String> = Vec::new();
         for statement in statements {
-            self.resolve_stmt(statement)?;
+            if let Err(e) = self.resolve_stmt(statement) {
+                errs.push(e);
+            }
         }
-        Ok(())
+        if errs.is_empty() {
+            Ok(())
+        } else {
+            Err(errs.join("\n"))
+        }
     }
 
     fn resolve_stmt(&mut self, statement: &Stmt) -> Result<(), String> {
